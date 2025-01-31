@@ -1,6 +1,8 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 
+# download image library thing pip install pillow
+
 class SplashScreen:
     def __init__(self):
         self.root = tk.Tk()
