@@ -14,11 +14,11 @@ def playerScreen():
     right_frame = tk.Frame(root, bg='green', width=400, height=600)
     right_frame.pack(side='right', fill='both', expand=True)
 
-    entry_label = tk.Label(left_frame, text="Enter your name:")
-    entry_label.place(relx = 0.5, rely= 0.45, anchor = "center")
+    entry_label = tk.Label(left_frame, text="Enter your name:", bg = "red", fg = "white")
+    entry_label.place(x = 10, y = 550)
 
-    entry = tk.Entry(root)
-    entry.place(relx = 0.5, rely= 0.5, anchor = "center")
+    entry = tk.Entry(left_frame)
+    entry.place(x = 120, y = 550)
 
     root.mainloop()
 
