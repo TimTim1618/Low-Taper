@@ -1,5 +1,8 @@
 from splashScreen import SplashScreen
 import tkinter as tk
+import random
+import time
+import playerAction
 
 #insert informaiton into database
 #--------------------------------------
@@ -57,31 +60,38 @@ def playerScreen():
     equipment_entry = tk.Entry(left_frame)
     equipment_entry.place(x=120, y=580)
 
-    # Function to capture and store name and equipment ID
-    red_team_count = 0
-    green_team_count = 0
-    
+    #Track player count
+    team_counts = {"Red": 0, "Green":0}
+
     def store_info():
-        nonlocal red_team_count, green_team_count
-        player_name = name_entry.get()
-        equipment_id = equipment_entry.get()
+        # Randomly assign player to teams
+        if team_counts["Red"] >= 2 and team_counts["Green"] >= 2:
+            print("Both teams are full with two players!")
+            return
+        
+        player_name = name_entry.get().strip()
+        equipment_id = equipment_entry.get().strip()
 
-        # Add only the player name to the database
-        #add_player_to_db(player_name)
+        if not player_name or not equipment_id.isdigit():
+            print("Invalid input. Please enter a name and a numeric equipment ID.")
+            return
 
-        if red_team_count < 2:
-            row = red_team_count + 1  # Start from row 1 for the first player (row 0 is header)
-            tk.Label(red_team_grid, text=player_name, bg="red", fg="white").grid(row=row, column=0)
-            tk.Label(red_team_grid, text=equipment_id, bg="red", fg="white").grid(row=row, column=1)
-            red_team_count += 1
-        elif green_team_count < 2:
-            row = green_team_count + 1  # Start from row 1 for the first player (row 0 is header)
-            tk.Label(green_team_grid, text=player_name, bg="green", fg="white").grid(row=row, column=0)
-            tk.Label(green_team_grid, text=equipment_id, bg="green", fg="white").grid(row=row, column=1)
-            green_team_count += 1
-        else:
-            # Show a message box when both teams are full
-            print("Teams Full", "Both teams are full. Please start the game!")
+        # Determine team assignment
+        available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
+        team = random.choice(available_teams)
+
+        row = team_counts[team] + 1  # Start from row 1 (row 0 is header)
+        grid = red_team_grid if team == "Red" else green_team_grid
+        color = "red" if team == "Red" else "green"
+
+        tk.Label(grid, text=player_name, bg=color, fg="white").grid(row=row, column=0)
+        tk.Label(grid, text=equipment_id, bg=color, fg="white").grid(row=row, column=1)
+
+        team_counts[team] += 1
+
+        # Check if teams are full
+        if team_counts["Red"] == 2 and team_counts["Green"] == 2:
+            print("Both teams are full. Ready to start!")
 
         # Clear the entry fields
         name_entry.delete(0, tk.END)
@@ -94,12 +104,11 @@ def playerScreen():
 #----------------------------------------------------------------
     #Bind <F3> to transition to player screen
     def on_f3(event):
-        player_action_screen()
+        playerAction.player_action_main(root)
 
-    def player_action_screen():
-        print("Transitioning to Player Action Screen!")
 #----------------------------------------------------------------
-    
+   
+    root.bind("<F3>", on_f3)
     root.mainloop()
 
 def main():
