@@ -3,7 +3,8 @@ import tkinter as tk
 
 #insert informaiton into database
 #--------------------------------------
-
+#def add_player_to_db():
+    #pass
 
 
 
@@ -66,7 +67,7 @@ def playerScreen():
         equipment_id = equipment_entry.get()
 
         # Add only the player name to the database
-        add_player_to_db(player_name)
+        #add_player_to_db(player_name)
 
         if red_team_count < 2:
             row = red_team_count + 1  # Start from row 1 for the first player (row 0 is header)
@@ -80,7 +81,7 @@ def playerScreen():
             green_team_count += 1
         else:
             # Show a message box when both teams are full
-            messagebox.showinfo("Teams Full", "Both teams are full. Please start the game!")
+            print("Teams Full", "Both teams are full. Please start the game!")
 
         # Clear the entry fields
         name_entry.delete(0, tk.END)
@@ -95,7 +96,7 @@ def playerScreen():
     def on_f3(event):
         player_action_screen()
 
-    def player_action_screen()
+    def player_action_screen():
         print("Transitioning to Player Action Screen!")
 #----------------------------------------------------------------
     
