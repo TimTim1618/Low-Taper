@@ -3,6 +3,15 @@ import tkinter as tk
 import random
 import playerAction
 
+#---------------------------------------------
+#information for data base
+# player id = {player_name}
+# equipment id = {equipment_id}
+# team color = {team}
+
+#--------------------------------------------
+
+
 def playerScreen():
     root = tk.Tk()
     root.geometry("800x600")
@@ -117,6 +126,7 @@ def playerScreen():
 def main():
     SplashScreen()
     playerScreen()
+
 
 if __name__ == "__main__":
     main()
