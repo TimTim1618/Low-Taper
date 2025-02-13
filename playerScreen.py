@@ -2,6 +2,7 @@ from splashScreen import SplashScreen
 import tkinter as tk
 import random
 import playerAction
+from networkSelector import UdpTransmitter
 
 #---------------------------------------------
 #information for data base
@@ -66,6 +67,9 @@ def playerScreen():
     # Track player count
     team_counts = {"Red": 0, "Green": 0}
 
+    # Create a UdpTransmitter instance
+    udp_transmitter = UdpTransmitter() 
+
     def store_info():
         """Randomly assigns a player to a team until both teams have 2 players."""
         if team_counts["Red"] >= 2 and team_counts["Green"] >= 2:
@@ -90,6 +94,12 @@ def playerScreen():
         # Add player to the grid with a white background
         tk.Label(grid, text=player_name, bg="white", fg="black", width=15).grid(row=row, column=0)
         tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
+
+        # Transmit the equipment code (and player name) via UDP.
+        message = f"{player_name}:{equipment_id}"
+        udp_response = udp_transmitter.send_message(message)
+        if udp_response:
+            print("UDP response:", udp_response)
 
         team_counts[team] += 1
 
