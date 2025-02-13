@@ -1,31 +1,44 @@
 import socket
+from networkSelector import NetworkSelector
 
-localIP     = "127.0.0.1"
-localPort   = 20001
-bufferSize  = 1024
-msgFromServer       = "Hello UDP Client"
-bytesToSend         = str.encode(msgFromServer)
+def main():
+    # Uses the NetworkSelector to choose the network for the server.
+    selector = NetworkSelector()
+    selector.select_network()
+    localIP, localPort = selector.get_selected_network()
 
-# Create a datagram socket
-UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    # Create a UDP socket and bind it to the selected server IP and port.
+    UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    try:
+        UDPServerSocket.bind((localIP, localPort))
+    except socket.error as e:
+        print(f"Error binding server socket to {localIP}:{localPort}: {e}")
+        return
 
-# Bind to address and ip
-UDPServerSocket.bind((localIP, localPort))
+    print(f"UDP server up and listening on {localIP}:{localPort}")
 
-print("UDP server up and listening")
+    bufferSize = 1024
+    msgFromServer = "Hello UDP Client"
+    bytesToSend = str.encode(msgFromServer)
 
-# Listen for incoming datagrams
+    while True:
+        try:
+            bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+            message = bytesAddressPair[0]
+            address = bytesAddressPair[1]
+            clientMsg = "Message from Client: {}".format(message.decode())
+            clientIP  = "Client IP Address: {}".format(address)
+            
+            print(clientMsg)
+            print(clientIP)
 
-while(True):
+            # Send a reply to the client.
+            UDPServerSocket.sendto(bytesToSend, address)
+        except KeyboardInterrupt:
+            print("\nServer shutting down.")
+            break
 
-    bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
-    message = bytesAddressPair[0]
-    address = bytesAddressPair[1]
-    clientMsg = "Message from Client:{}".format(message)
-    clientIP  = "Client IP Address:{}".format(address)
-    
-    print(clientMsg)
-    print(clientIP)
+    UDPServerSocket.close()
 
-    # Sending a reply to client
-    UDPServerSocket.sendto(bytesToSend, address)
+if __name__ == "__main__":
+    main()
