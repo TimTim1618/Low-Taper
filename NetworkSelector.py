@@ -39,9 +39,15 @@ class NetworkSelector:
 
 class UdpTransmitter:
     
-    def __init__(self, ip="127.0.0.1", port=20001, buffer_size=1024):
+    def __init__(self, ip="127.0.0.1", port=20001, client_port=7501, buffer_size=1024):
+        """
+        ip: The destination server IP.
+        port: The destination server port.
+        client_port: The port from which the client sends messages.
+        """
         self.ip = ip
         self.port = port
+        self.client_port = client_port
         self.buffer_size = buffer_size
 
     def set_network(self, ip, port):
@@ -52,10 +58,18 @@ class UdpTransmitter:
     def send_message(self, message, receive_response=True):
         bytes_to_send = message.encode()
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        
+        # Bind the socket to the designated client port.
+        try:
+            udp_socket.bind(("", self.client_port))
+        except socket.error as e:
+            print("Error binding to client port:", e)
+            udp_socket.close()
+            return None
 
         try:
             udp_socket.sendto(bytes_to_send, (self.ip, self.port))
-            print(f"Sent message: '{message}' to {(self.ip, self.port)}")
+            print(f"Sent message: '{message}' from client port {self.client_port} to {(self.ip, self.port)}")
 
             if receive_response:
                 udp_socket.settimeout(2)  
