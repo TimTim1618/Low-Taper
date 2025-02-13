@@ -17,7 +17,11 @@ class NetworkSelector:
             print(f"{i}. {name} ({ip}:{port})")
         print(f"{len(self.predefined_networks) + 1}. Enter custom network")
 
-        choice = input(f"Enter your choice (1-{len(self.predefined_networks) + 1}): ")
+        try:
+            choice = input(f"Enter your choice (1-{len(self.predefined_networks) + 1}): ")
+        except EOFError:
+            print("No input provided, using default network.")
+            choice = "1"
 
         try:
             choice = int(choice)
