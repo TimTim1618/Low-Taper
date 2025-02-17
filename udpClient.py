@@ -8,10 +8,9 @@ def main():
 
     # Create the transmitter.
     # client_port is set to 7501 
-    transmitter = UdpTransmitter(ip=server_ip, port=server_port, client_port=7501)
+    transmitter = UdpTransmitter(ip=server_ip, port=server_port, client_port=7500)
     
     # Send the message to the server.
-    response = transmitter.send_message("Hello UDP Server")
     if response:
         print("Message from Server:", response)
 
