@@ -4,10 +4,10 @@ import socket
 class NetworkSelector:
     def __init__(self):
         self.predefined_networks = [
-            ("Localhost", "127.0.0.1", 20001),
+            ("Localhost", "127.0.0.1", 7501),
         ]
         self.selected_ip = "127.0.0.1"
-        self.selected_port = 20001
+        self.selected_port = 7501
 
     def select_network(self):
         print("\nSelect a network to connect to:")
@@ -39,7 +39,7 @@ class NetworkSelector:
         return self.selected_ip, self.selected_port
 
 class UdpTransmitter:
-    def __init__(self, ip="127.0.0.1", port=20001, client_port=7501, buffer_size=1024):
+    def __init__(self, ip="127.0.0.1", port=7501, client_port=7500, buffer_size=1024):
         self.ip = ip
         self.port = port
         self.client_port = client_port
