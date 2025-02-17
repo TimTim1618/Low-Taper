@@ -3,6 +3,8 @@ import tkinter as tk
 import random
 import playerAction
 from networkSelector import UdpTransmitter
+import psycopg2
+from psycopg2 import sql
 
 #---------------------------------------------
 #information for data base
@@ -11,6 +13,44 @@ from networkSelector import UdpTransmitter
 # team color = {team}
 
 #--------------------------------------------
+
+#---------------------------------------------
+# Database connection setup
+def connect_to_db():
+    # Define connection parameters
+    connection_params = {
+        'dbname': 'photon',
+        'user': 'student',
+        'password': 'student',
+        'host': '192.168.0.42', #May need to be changed each time based on the VM ip address
+        'port': '5432' # Uncomment if needed
+    }
+    
+    try:
+        conn = psycopg2.connect(**connection_params)
+        return conn
+    except Exception as error:
+        print(f"Error connecting to PostgreSQL database: {error}")
+        return None
+
+def insert_player_to_db(player_name, equipment_id):
+    conn = connect_to_db()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''INSERT INTO players (id, codename) VALUES (%s, %s);''', (equipment_id, player_name))
+            conn.commit()
+            print(f"Player {player_name} inserted into the database.")
+        except Exception as error:
+            print(f"Error inserting player into database: {error}")
+        finally:
+            cursor.close()
+            conn.close()
+
+#---------------------------------------------
+
+
+
 
 
 def playerScreen():
@@ -83,6 +123,8 @@ def playerScreen():
             print("Invalid input. Please enter a name and a numeric equipment ID.")
             return
 
+        insert_player_to_db(player_name, equipment_id)
+
         # Determine team assignment
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
         team = random.choice(available_teams)
@@ -96,7 +138,7 @@ def playerScreen():
         tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
 
         # Transmit the equipment code (and player name) via UDP.
-        message = f"{equipment_id}"
+        message = f"{player_name}:{equipment_id}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
             print("UDP response:", udp_response)
