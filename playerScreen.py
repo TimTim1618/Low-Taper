@@ -96,7 +96,7 @@ def playerScreen():
         tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
 
         # Transmit the equipment code (and player name) via UDP.
-        message = f"{player_name}:{equipment_id}"
+        message = f"{equipment_id}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
             print("UDP response:", udp_response)
