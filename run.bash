@@ -1,19 +1,21 @@
-#make executable on with this command: chmod +x run.bash
-#idk if it is the same for windows
 #!/bin/bash
-# run.bash
 
-# Start the UDP server
-python3 udpServer.py &
-SERVER_PID=$!
-echo "Started UDP server with PID: $SERVER_PID"
+echo "Select a network to connect to:"
+echo "1. Localhost (127.0.0.1:20001)"
+echo "2. Enter custom network"
+read -p "Enter your choice (1 or 2): " choice
 
-# wait 
-sleep 2
+if [ "$choice" = "1" ]; then
+    ip="127.0.0.1"
+    port=20001
+elif [ "$choice" = "2" ]; then
+    read -p "Enter IP address: " ip
+    read -p "Enter Port number: " port
+else
+    echo "Invalid choice, defaulting to localhost."
+    ip="127.0.0.1"
+    port=20001
+fi
 
-# Start the player screen
-python3 playerScreen.py
-
-# terminate the UDP server
-kill $SERVER_PID
-echo "UDP server terminated."
+echo "Selected Network: $ip:$port"
+python3 playerScreen.py "$ip" "$port"
