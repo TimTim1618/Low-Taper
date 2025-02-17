@@ -18,8 +18,6 @@ def main():
     print(f"UDP server up and listening on {localIP}:{localPort}")
 
     bufferSize = 1024
-    msgFromServer = "Hello UDP Client"
-    bytesToSend = str.encode(msgFromServer)
 
     while True:
         try:
