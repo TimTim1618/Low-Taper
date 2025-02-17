@@ -84,7 +84,7 @@ if __name__ == "__main__":
             port = int(sys.argv[2])
         except ValueError:
             print("Invalid port provided. Using default.")
-            ip, port = "127.0.0.1", 20001
+            ip, port = "127.0.0.1", 7501
     else:
         selector = NetworkSelector()
         selector.select_network()
