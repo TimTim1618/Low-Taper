@@ -2,7 +2,7 @@ import socket
 from networkSelector import NetworkSelector
 
 def main():
-    #choosing the network here 
+    # Choosing the network here
     selector = NetworkSelector()
     selector.select_network()
     localIP, localPort = selector.get_selected_network()
@@ -25,13 +25,16 @@ def main():
             message = bytesAddressPair[0]
             address = bytesAddressPair[1]
             clientMsg = "Message from Client: {}".format(message.decode())
-            clientIP  = "Client IP Address: {}".format(address)
-            
+            clientIP = "Client IP Address: {}".format(address)
+
             print(clientMsg)
             print(clientIP)
 
-            #reply to the client.
+            # Define the response before sending it
+            response_message = "Received: " + message.decode()
+            bytesToSend = response_message.encode()
             UDPServerSocket.sendto(bytesToSend, address)
+
         except KeyboardInterrupt:
             print("\nServer shutting down.")
             break
