@@ -38,7 +38,7 @@ def insert_player_to_db(player_name, equipment_id):
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('''INSERT INTO players (id, codename) VALUES (%s, %s);''', (equipment_id, player_name))
+            cursor.execute('''INSERT INTO players (id, codename) VALUES (%s, %s);''', (int(equipment_id), player_name))
             conn.commit()
             print(f"Player {player_name} inserted into the database.")
         except Exception as error:
