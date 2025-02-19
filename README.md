@@ -5,12 +5,15 @@ to give permission use chmod +x run.bash
 
 How to run code on oracle / bash
 #---------------------------------------------------
-use command ./run.bash
-udp server - python3 udpServer.py
 How to install python3 - sudo apt update  ->  sudo apt install python3
 How to install pip - sudo apt install python3-pip
+How to install Tk - sudo apt update  ->  sudo apt install python3-tk
 How to install psycopg2 - pip install psycopg2
 
+use command ./run.bash
+          Press 1 and connect to local host. Then enter player and equipment id
+udp server - python3 udpServer.py
+          Press 1 and connect to the local host. It should now be listening for any inputs
 
 
 
