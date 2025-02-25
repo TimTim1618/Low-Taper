@@ -9,6 +9,7 @@ How to install python3 - sudo apt update  ->  sudo apt install python3
 How to install pip - sudo apt install python3-pip
 How to install Tk - sudo apt update  ->  sudo apt install python3-tk
 How to install psycopg2 - pip install psycopg2
+How to install pillow - pip install pillow
 
 use command ./run.bash
           Press 1 and connect to local host. Then enter player and equipment id
