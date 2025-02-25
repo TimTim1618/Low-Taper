@@ -21,6 +21,10 @@ udp server - python3 udpServer.py
 #---------------------------------------------------
 For running the Virtual machine:
 
+###
+Need to chage Host playerScreen.py to 127.0.0.1 instead of 192.168.0.42
+###
+
 Change the listening address to accept connections from external hosts:
 Use command:
           sudo nano /etc/postgresql/13/main/postgresql.conf
