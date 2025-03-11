@@ -32,7 +32,7 @@ def player_action_main(previous_window):
     # action_window.bind("<F1>", on_f1)
 
     # action_window.bind("<F4>", on_f4)
-    # action_window.mainloop()
+    action_window.mainloop()
 
     
 

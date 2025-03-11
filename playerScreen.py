@@ -10,6 +10,7 @@ from psycopg2 import sql
 #information for data base
 # player id = {player_name}
 # equipment id = {equipment_id}
+# hardware id = {hardware_id}
 # team color = {team}
 
 #--------------------------------------------
