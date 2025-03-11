@@ -33,12 +33,12 @@ def connect_to_db():
         print(f"Error connecting to PostgreSQL database: {error}")
         return None
 
-def insert_player_to_db(player_name, equipment_id):
+def insert_player_to_db(player_name, equipment_id, hardware_id):
     conn = connect_to_db()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('''INSERT INTO players (id, codename) VALUES (%s, %s);''', (int(equipment_id), player_name))
+            cursor.execute('''INSERT INTO players (id, team, hardware) VALUES (%s, %s);''', (int(equipment_id), player_name,int(hardware_id)))
             conn.commit()
             print(f"Player {player_name} inserted into the database.")
         except Exception as error:
@@ -86,25 +86,34 @@ def playerScreen():
     tk.Label(red_team_grid, text="Equipment ID", bg="red", fg="white").grid(row=0, column=1)
     tk.Label(green_team_grid, text="Player Name", bg="green", fg="white").grid(row=0, column=0)
     tk.Label(green_team_grid, text="Equipment ID", bg="green", fg="white").grid(row=0, column=1)
+    tk.Label(red_team_grid, text="Hardware ID", bg="red", fg="white").grid(row=0, column=2)
+    tk.Label(green_team_grid, text="Hardware ID", bg="green", fg="white").grid(row=0, column=2)
 
     # Input area inside white bottom bar
-    entry_label = tk.Label(bottom_bar, text="Enter Name:", bg="white", fg="black")
-    entry_label.grid(row=0, column=0, padx=10, pady=5)
+    entry_label = tk.Label(bottom_bar, text="Enter UserID:", bg="white", fg="black")
+    entry_label.grid(row=0, column=0, padx=7, pady=5)
 
     name_entry = tk.Entry(bottom_bar)
-    name_entry.grid(row=0, column=1, padx=10, pady=5)
+    name_entry.grid(row=0, column=1, padx=7, pady=5)
 
-    equipment_label = tk.Label(bottom_bar, text="Enter Equipment ID:", bg="white", fg="black")
-    equipment_label.grid(row=0, column=2, padx=10, pady=5)
+    equipment_label = tk.Label(bottom_bar, text="Enter EquipmentID:", bg="white", fg="black")
+    equipment_label.grid(row=0, column=2, padx=7, pady=5)
 
     equipment_entry = tk.Entry(bottom_bar)
-    equipment_entry.grid(row=0, column=3, padx=10, pady=5)
+    equipment_entry.grid(row=0, column=3, padx=7, pady=5)
 
-    # Track player count
+    hardware_label = tk.Label(bottom_bar, text="Enter HardwareID:", bg="white", fg="black")
+    hardware_label.grid(row=0, column=4, padx=7, pady=5)
+
+    hardware_entry = tk.Entry(bottom_bar, text = "Enter HardwareID", bg = "white", fg = "black")
+    hardware_entry.grid(row=0, column=5, padx=7, pady=5)
+
+    #track player count
     team_counts = {"Red": 0, "Green": 0}
 
-    # Create a UdpTransmitter instance
-    udp_transmitter = UdpTransmitter() 
+    #create a Udp transmitter instence
+    udp_transmitter = UdpTransmitter()
+
 
     def store_info():
         """Randomly assigns a player to a team until both teams have 2 players."""
@@ -114,35 +123,36 @@ def playerScreen():
 
         player_name = name_entry.get().strip()
         equipment_id = equipment_entry.get().strip()
+        hardware_id = hardware_entry.get().strip() 
 
-        if not player_name or not equipment_id.isdigit():
-            print("Invalid input. Please enter a name and a numeric equipment ID.")
+        if not player_name or not equipment_id.isdigit() or not hardware_id:
+            print("Invalid input. Please enter a name, numeric equipment ID, and a hardware ID.")
             return
 
-        insert_player_to_db(player_name, equipment_id)
+        insert_player_to_db(player_name, equipment_id, hardware_id)  # Updated function call
 
-        # Determine team assignment
+    # Determine team assignment
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
         team = random.choice(available_teams)
 
-        row = team_counts[team] + 1  # Start from row 1 (row 0 is header)
+        row = team_counts[team] + 1
         grid = red_team_grid if team == "Red" else green_team_grid
         color = "red" if team == "Red" else "green"
 
-        # Add player to the grid with a white background
         tk.Label(grid, text=player_name, bg="white", fg="black", width=15).grid(row=row, column=0)
         tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
+        tk.Label(grid, text=hardware_id, bg="white", fg="black", width=15).grid(row=row, column=2)
 
-        # Transmit the equipment code (and player name) via UDP.
-        message = f"{player_name}:{equipment_id}"
+    # Transmit the equipment code, hardware ID, and player name via UDP.
+        message = f"{player_name}:{equipment_id}:{hardware_id}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
             print("UDP response:", udp_response)
 
         team_counts[team] += 1
 
-        # Print player info to the terminal
-        print(f"UserId: {player_name}, Equipment ID: {equipment_id}, Team: {team}")
+        print(f"UserId: {player_name}, Equipment ID: {equipment_id}, Hardware ID: {hardware_id}, Team: {team}")
+
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
@@ -154,7 +164,7 @@ def playerScreen():
 
     # Submit button
     submit_button = tk.Button(bottom_bar, text="Submit", command=store_info)
-    submit_button.grid(row=0, column=4, padx=10, pady=5)
+    submit_button.grid(row=0, column=6, padx=10, pady=5)
 
     #tell user to press f3
     f3_label = tk.Label(left_frame, text="F3 Start Game", font=("Arial", 10, "bold"), fg="black", bg="red")
