@@ -1,45 +1,56 @@
 import socket
+import logging
 from networkSelector import NetworkSelector
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 def main():
-    # Choosing the network here
     selector = NetworkSelector()
     selector.select_network()
     localIP, localPort = selector.get_selected_network()
 
-    # Create a UDP socket and bind it to the selected server IP and port.
-    UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    # # Default to 127.0.0.1 unless changed by user
+    # if not selector.network_changed_by_user():
+    #     localIP = "127.0.0.1"
+
+    UDPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
     try:
         UDPServerSocket.bind((localIP, localPort))
     except socket.error as e:
-        print(f"Error binding server socket to {localIP}:{localPort}: {e}")
+        logging.error(f"Error binding server socket to {localIP}:{localPort}: {e}")
         return
 
-    print(f"UDP server up and listening on {localIP}:{localPort}")
+    logging.info(f"UDP server up and listening on {localIP}:{localPort}")
 
     bufferSize = 1024
+    UDPServerSocket.settimeout(2)  # Prevents blocking indefinitely
 
-    while True:
-        try:
-            bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
-            message = bytesAddressPair[0]
-            address = bytesAddressPair[1]
-            clientMsg = "Message from Client: {}".format(message.decode())
-            clientIP = "Client IP Address: {}".format(address)
+    try:
+        while True:
+            try:
+                bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+                message = bytesAddressPair[0].decode()
+                address = bytesAddressPair[1]
 
-            print(clientMsg)
-            print(clientIP)
+                logging.info(f"Message from Client: {message}")
+                logging.info(f"Client IP Address: {address}")
 
-            # Define the response before sending it
-            response_message = "Received: " + message.decode()
-            bytesToSend = response_message.encode()
-            UDPServerSocket.sendto(bytesToSend, address)
+                # Define the response before sending it
+                response_message = f"Received: {message}"
+                UDPServerSocket.sendto(response_message.encode(), address)
 
-        except KeyboardInterrupt:
-            print("\nServer shutting down.")
-            break
+            except socket.timeout:
+                pass  # Prevents freezing when there's no incoming message
 
-    UDPServerSocket.close()
+            except socket.error as e:
+                logging.warning(f"Error receiving data: {e}")
+
+    except KeyboardInterrupt:
+        logging.info("Server shutting down.")
+    finally:
+        UDPServerSocket.close()
 
 if __name__ == "__main__":
     main()

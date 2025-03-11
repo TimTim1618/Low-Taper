@@ -22,7 +22,7 @@ def connect_to_db():
         'dbname': 'photon',
         'user': 'student',
         'password': 'student',
-        'host': '192.168.0.42', #May need to be changed each time based on the VM ip address
+        'host': '127.0.0.1', #May need to be changed each time based on the VM ip address
         'port': '5432' # Uncomment if needed
     }
     
@@ -146,7 +146,7 @@ def playerScreen():
         team_counts[team] += 1
 
         # Print player info to the terminal
-        print(f"Player: {player_name}, Equipment ID: {equipment_id}, Team: {team}")
+        print(f"UserId: {player_name}, Equipment ID: {equipment_id}, Team: {team}")
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
