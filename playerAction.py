@@ -18,11 +18,20 @@ def player_action_main(previous_window):
     def on_f1(event):
         action_window.destroy()
         playerScreen.playerScreen()
+    
+    def on_f4(event):
+        #function goes here
 
+    #f4 start button stuff. Starts countdown and music
+    f4_button = tk.Button(action_window, text="Start Countdown (f4)", command = #countdown and musci function goes here )
+    f4_button.pack(pady=20)   
 
     action_window.bind("<F1>", on_f1)
 
+    action_window.bind("<F4>", on_f4)
     action_window.mainloop()
+
+    
 
 #-----------------------------------
 
