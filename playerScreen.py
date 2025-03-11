@@ -13,7 +13,7 @@ from psycopg2 import sql
 # team color = {team}
 
 #--------------------------------------------
-
+pooop
 #---------------------------------------------
 # Database connection setup
 def connect_to_db():
