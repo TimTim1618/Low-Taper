@@ -4,7 +4,7 @@ from tkinter import Frame, Label, Text
 
 #action menu
 #-----------------------------------
-def player_action_main(previous_window): 
+def player_action_main(previous_window, player_teams): 
 
     previous_window.destroy() 
 
