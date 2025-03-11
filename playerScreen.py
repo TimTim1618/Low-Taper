@@ -49,10 +49,6 @@ def insert_player_to_db(player_name, equipment_id):
 
 #---------------------------------------------
 
-
-
-
-
 def playerScreen():
     root = tk.Tk()
     root.geometry("800x600")
