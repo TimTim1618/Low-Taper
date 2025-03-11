@@ -18,7 +18,10 @@ def player_action_main(previous_window):
     def on_f1(event):
         action_window.destroy()
         playerScreen.playerScreen()
-    
+    f1_button = tk.Button(action_window, text="Player Screen", command = on_f1)
+    f1_button.pack(pady=20)
+
+    #start button
     def on_f4(event):
         #function goes here
 
