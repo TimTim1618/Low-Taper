@@ -3,9 +3,12 @@ import tkinter as tk
 from tkinter import Frame, Label, Text
 
 #action menu
-#-----------------------------------    
-def player_action_main(previous_window, player_teams):
-    previous_window.destroy()  # Close the previous window
+#-----------------------------------
+def player_action_main(previous_window): 
+
+    previous_window.destroy() 
+
+     
 
     action_window = tk.Tk()
     action_window.title("Player Action")

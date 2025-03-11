@@ -10,7 +10,6 @@ from psycopg2 import sql
 #information for data base
 # player id = {player_name}
 # equipment id = {equipment_id}
-# hardware id = {hardware_id}
 # team color = {team}
 
 #--------------------------------------------
@@ -116,6 +115,8 @@ def playerScreen():
     udp_transmitter = UdpTransmitter()
 
 
+    player_teams = {"Red": [], "Green": []}
+
     def store_info():
         """Randomly assigns a player to a team until both teams have 2 players."""
         if team_counts["Red"] >= 2 and team_counts["Green"] >= 2:
@@ -130,11 +131,14 @@ def playerScreen():
             print("Invalid input. Please enter a name, numeric equipment ID, and a hardware ID.")
             return
 
-        insert_player_to_db(player_name, equipment_id, hardware_id)  # Updated function call
+        insert_player_to_db(player_name, equipment_id, hardware_id)
 
-    # Determine team assignment
+        # Determine team assignment
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
         team = random.choice(available_teams)
+
+        # Add player to the correct team in dictionary
+        player_teams[team].append((player_name, equipment_id))
 
         row = team_counts[team] + 1
         grid = red_team_grid if team == "Red" else green_team_grid
@@ -144,7 +148,7 @@ def playerScreen():
         tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
         tk.Label(grid, text=hardware_id, bg="white", fg="black", width=15).grid(row=row, column=2)
 
-    # Transmit the equipment code, hardware ID, and player name via UDP.
+        # Transmit equipment code, hardware ID, and player name via UDP
         message = f"{player_name}:{equipment_id}:{hardware_id}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
@@ -153,7 +157,6 @@ def playerScreen():
         team_counts[team] += 1
 
         print(f"UserId: {player_name}, Equipment ID: {equipment_id}, Hardware ID: {hardware_id}, Team: {team}")
-
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
@@ -174,11 +177,10 @@ def playerScreen():
     # Bind <F3> to transition to player action screen
     def on_f3(event):
         player_action_screen()
-
     def player_action_screen():
         print("Transitioning to Player Action Screen!")
-        playerAction.player_action_main(root)
-
+        playerAction.player_action_main(root, player_teams)
+        
     root.bind("<F3>", on_f3)
     root.mainloop()
 
