@@ -16,8 +16,10 @@ use command ./run.bash
           Press 1 and connect to local host. Then enter player and equipment id
 udp server - python3 udpServer.py
           Press 1 and connect to the local host. It should now be listening for any inputs
-
-
+#----------------------------------------------------------
+Game commands
+      F3 - Switch to play action screen
+      F1 - Switch back to player screen
 
 #---------------------------------------------------
 For running the Virtual machine:

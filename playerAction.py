@@ -59,13 +59,16 @@ def countdown_timer(player_teams):
         if index == -1 and alert_img:
             countdown_label.config(image=alert_img)
             countdown_window.after(1000, update_countdown, 0)
+    #start audio playing so it will line up with 5 second countdown
+        elif index == 14:
+            track_path = os.path.join("photon_tracks", "Track02.mp3")
+            pygame.mixer.music.load(track_path)
+            pygame.mixer.music.play()
+            countdown_label.config(image=countdown_images[index])
+            countdown_window.after(1000, update_countdown, index + 1)
         elif index < len(countdown_images):
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
-        # elif index == 20:
-        #     track_path = os.path.join("photon_tracks", "Track02.mp3")
-        #     pygame.mixer.music.load(track_path)
-        #     pygame.mixer.music.play()
         else:
             countdown_window.destroy() 
             action_log(player_teams) 
