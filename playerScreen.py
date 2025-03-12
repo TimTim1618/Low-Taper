@@ -165,6 +165,7 @@ def playerScreen():
         # Clear input fields
         name_entry.delete(0, tk.END)
         equipment_entry.delete(0, tk.END)
+        hardware_entry.delete(0, tk.END)
 
     # Submit button
     submit_button = tk.Button(bottom_bar, text="Submit", command=store_info)
@@ -173,6 +174,32 @@ def playerScreen():
     #tell user to press f3
     f3_label = tk.Label(left_frame, text="F3 Start Game", font=("Arial", 10, "bold"), fg="black", bg="red")
     f3_label.place(x=10, y=500)
+    #tell the user to press f12 to clear the screen
+    f12_label = tk.Label(left_frame, text="F12 Clear Players", font = ("Arial", 10, "bold"), fg = "black", bg = "red")
+    f12_label.place(x=10, y=525)
+
+    # Remove players from player screen 
+    def on_f12(event):
+        for team in ["Red", "Green"]:
+            for player in player_teams[team]:
+                player_name, equipment_id = player
+                print(f"Removing player {player_name} from team {team}.")
+                player_teams[team].remove(player)
+                team_counts[team] -= 1
+
+        # Clear grid
+        for widget in red_team_grid.winfo_children():
+            widget.destroy()
+        for widget in green_team_grid.winfo_children():
+            widget.destroy()
+
+        # Clear input fields
+        name_entry.delete(0, tk.END)
+        equipment_entry.delete(0, tk.END)
+
+        print("All players removed from teams.")
+
+    root.bind("<F12>", on_f12)
 
     # Bind <F3> to transition to player action screen
     def on_f3(event):

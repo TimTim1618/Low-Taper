@@ -39,7 +39,8 @@ def countdown_timer(player_teams):
 
     # Load countdown images with numbers overlaid on the background
     countdown_images = []
-    for i in range(30, -1, -1): 
+    #countdown set at 3 seconds until we turn it in... then change it to 30.
+    for i in range(3, -1, -1): 
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA")
@@ -59,13 +60,13 @@ def countdown_timer(player_teams):
         if index == -1 and alert_img:
             countdown_label.config(image=alert_img)
             countdown_window.after(1000, update_countdown, 0)
-    #start audio playing so it will line up with 5 second countdown
-        elif index == 14:
-            track_path = os.path.join("photon_tracks", "Track02.mp3")
-            pygame.mixer.music.load(track_path)
-            pygame.mixer.music.play()
-            countdown_label.config(image=countdown_images[index])
-            countdown_window.after(1000, update_countdown, index + 1)
+    #Audio for countdown / we will implement this when needed in future sprints 
+        # elif index == 12:
+        #     track_path = os.path.join("photon_tracks", "Track02.mp3")
+        #     pygame.mixer.music.load(track_path)
+        #     pygame.mixer.music.play()
+        #     countdown_label.config(image=countdown_images[index])
+        #     countdown_window.after(1000, update_countdown, index + 1)
         elif index < len(countdown_images):
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
@@ -129,7 +130,7 @@ def action_log(player_teams):
     bottom_frame = tk.Frame(action_window, bg='black')
     bottom_frame.pack(fill="x", padx=10, pady=5)
 
-    timer_label = tk.Label(bottom_frame, text="Time Remaining: 3:00", font=("Arial", 16, "bold"), fg="white", bg="black")
+    timer_label = tk.Label(bottom_frame, text="Time Remaining: 6:00", font=("Arial", 16, "bold"), fg="white", bg="black")
     timer_label.pack()
 
     # Switch back to player screen

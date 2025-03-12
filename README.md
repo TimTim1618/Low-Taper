@@ -20,6 +20,7 @@ udp server - python3 udpServer.py
 Game commands
       F3 - Switch to play action screen
       F1 - Switch back to player screen
+      F12 - Clear players 
 
 #---------------------------------------------------
 For running the Virtual machine:
