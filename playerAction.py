@@ -144,3 +144,4 @@ def action_log(player_teams):
     # f1_button.pack(pady=20)
 
     action_window.mainloop()
+#
