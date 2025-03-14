@@ -9,7 +9,8 @@ from psycopg2 import sql
 #---------------------------------------------
 #information for data base
 # player id = {player_name}
-# equipment id = {equipment_id}
+# user id = {user_id}
+# hardware id = {hardware_id}
 # team color = {team}
 
 #--------------------------------------------
@@ -18,12 +19,13 @@ from psycopg2 import sql
 # Database connection setup
 def connect_to_db():
     # Define connection parameters
+    # We only need "photon" database
     connection_params = {
-        'dbname': 'photon',
-        'user': 'student',
-        'password': 'student',
-        'host': '127.0.0.1', #May need to be changed each time based on the VM ip address
-        'port': '5432' # Uncomment if needed
+        'dbname': 'photon'
+        # 'user': 'student',
+        # 'password': 'student',
+        # 'host': '127.0.0.1', #May need to be changed each time based on the VM ip address
+        # 'port': '5432' # Uncomment if needed
     }
     
     try:
@@ -33,12 +35,12 @@ def connect_to_db():
         print(f"Error connecting to PostgreSQL database: {error}")
         return None
 
-def insert_player_to_db(player_name, equipment_id, hardware_id):
+def insert_player_to_db(player_name, user_id, hardware_id):
     conn = connect_to_db()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('''INSERT INTO players (id, team, hardware) VALUES (%s, %s);''', (int(equipment_id), player_name,int(hardware_id)))
+            cursor.execute('''INSERT INTO players (id, team, hardware) VALUES (%s, %s);''', (int(user_id), player_name,int(hardware_id)))
             conn.commit()
             print(f"Player {player_name} inserted into the database.")
         except Exception as error:
@@ -83,24 +85,24 @@ def playerScreen():
 
     # Display headers for grid
     tk.Label(red_team_grid, text="Player Name", bg="red", fg="white").grid(row=0, column=0)
-    tk.Label(red_team_grid, text="Equipment ID", bg="red", fg="white").grid(row=0, column=1)
+    tk.Label(red_team_grid, text="User ID", bg="red", fg="white").grid(row=0, column=1)
     tk.Label(green_team_grid, text="Player Name", bg="green", fg="white").grid(row=0, column=0)
-    tk.Label(green_team_grid, text="Equipment ID", bg="green", fg="white").grid(row=0, column=1)
+    tk.Label(green_team_grid, text="User ID", bg="green", fg="white").grid(row=0, column=1)
     tk.Label(red_team_grid, text="Hardware ID", bg="red", fg="white").grid(row=0, column=2)
     tk.Label(green_team_grid, text="Hardware ID", bg="green", fg="white").grid(row=0, column=2)
 
     # Input area inside white bottom bar
-    entry_label = tk.Label(bottom_bar, text="Enter UserID:", bg="white", fg="black")
+    entry_label = tk.Label(bottom_bar, text="Enter Playername:", bg="white", fg="black")
     entry_label.grid(row=0, column=0, padx=7, pady=5)
 
     name_entry = tk.Entry(bottom_bar)
     name_entry.grid(row=0, column=1, padx=7, pady=5)
 
-    equipment_label = tk.Label(bottom_bar, text="Enter EquipmentID:", bg="white", fg="black")
-    equipment_label.grid(row=0, column=2, padx=7, pady=5)
+    user_label = tk.Label(bottom_bar, text="Enter UserID:", bg="white", fg="black")
+    user_label.grid(row=0, column=2, padx=7, pady=5)
 
-    equipment_entry = tk.Entry(bottom_bar)
-    equipment_entry.grid(row=0, column=3, padx=7, pady=5)
+    user_entry = tk.Entry(bottom_bar)
+    user_entry.grid(row=0, column=3, padx=7, pady=5)
 
     hardware_label = tk.Label(bottom_bar, text="Enter HardwareID:", bg="white", fg="black")
     hardware_label.grid(row=0, column=4, padx=7, pady=5)
@@ -124,39 +126,39 @@ def playerScreen():
             return
 
         player_name = name_entry.get().strip()
-        equipment_id = equipment_entry.get().strip()
+        user_id = user_entry.get().strip()
         hardware_id = hardware_entry.get().strip() 
 
-        if not player_name or not equipment_id.isdigit() or not hardware_id:
-            print("Invalid input. Please enter a name, numeric equipment ID, and a hardware ID.")
+        if not player_name or not user_id.isdigit() or not hardware_id.isdigit():
+            print("Invalid input. Please enter a name, numeric user ID, and numeric hardware ID.")
             return
 
-        insert_player_to_db(player_name, equipment_id, hardware_id)
+        insert_player_to_db(player_name, user_id, hardware_id)
 
         # Determine team assignment
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
         team = random.choice(available_teams)
 
         # Add player to the correct team in dictionary
-        player_teams[team].append((player_name, equipment_id))
+        player_teams[team].append((player_name, user_id))
 
         row = team_counts[team] + 1
         grid = red_team_grid if team == "Red" else green_team_grid
         color = "red" if team == "Red" else "green"
 
         tk.Label(grid, text=player_name, bg="white", fg="black", width=15).grid(row=row, column=0)
-        tk.Label(grid, text=equipment_id, bg="white", fg="black", width=15).grid(row=row, column=1)
+        tk.Label(grid, text=user_id, bg="white", fg="black", width=15).grid(row=row, column=1)
         tk.Label(grid, text=hardware_id, bg="white", fg="black", width=15).grid(row=row, column=2)
 
-        # Transmit equipment code, hardware ID, and player name via UDP
-        message = f"{player_name}:{equipment_id}:{hardware_id}"
+        # Transmit player name, user ID, and hardware ID to UDP server
+        message = f"{player_name}:{user_id}:{hardware_id}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
             print("UDP response:", udp_response)
 
         team_counts[team] += 1
 
-        print(f"UserId: {player_name}, Equipment ID: {equipment_id}, Hardware ID: {hardware_id}, Team: {team}")
+        print(f"Playername: {player_name}, User ID: {user_id}, Hardware ID: {hardware_id}, Team: {team}")
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
@@ -164,7 +166,7 @@ def playerScreen():
 
         # Clear input fields
         name_entry.delete(0, tk.END)
-        equipment_entry.delete(0, tk.END)
+        user_entry.delete(0, tk.END)
         hardware_entry.delete(0, tk.END)
 
     # Submit button
@@ -181,23 +183,24 @@ def playerScreen():
     # Remove players from player screen 
     def on_f12(event):
         for team in ["Red", "Green"]:
-            for player in player_teams[team]:
-                player_name, equipment_id = player
-                print(f"Removing player {player_name} from team {team}.")
-                player_teams[team].remove(player)
-                team_counts[team] -= 1
+            player_teams[team].clear()
+            team_counts[team] = 0
 
-        # Clear grid
+
         for widget in red_team_grid.winfo_children():
-            widget.destroy()
+            if widget.grid_info()["row"] > 0:
+                widget.destroy()
+
         for widget in green_team_grid.winfo_children():
-            widget.destroy()
+            if widget.grid_info()["row"] > 0:
+                widget.destroy()
 
-        # Clear input fields
+        #clear input fields
         name_entry.delete(0, tk.END)
-        equipment_entry.delete(0, tk.END)
+        user_entry.delete(0, tk.END)
+        hardware_entry.delete(0, tk.END)
 
-        print("All players removed from teams.")
+        print("All players removed!")
 
     root.bind("<F12>", on_f12)
 
