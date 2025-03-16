@@ -4,6 +4,7 @@ import random
 import playerAction
 from networkSelector import UdpTransmitter
 import psycopg2
+import threading
 from psycopg2 import sql
 
 #---------------------------------------------
@@ -22,10 +23,6 @@ def connect_to_db():
     # We only need "photon" database
     connection_params = {
         'dbname': 'photon'
-        # 'user': 'student',
-        # 'password': 'student',
-        # 'host': '127.0.0.1', #May need to be changed each time based on the VM ip address
-        # 'port': '5432' # Uncomment if needed
     }
     
     try:
@@ -40,7 +37,7 @@ def insert_player_to_db(player_name, user_id, hardware_id):
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('''INSERT INTO players (id, team, hardware) VALUES (%s, %s);''', (int(user_id), player_name,int(hardware_id)))
+            cursor.execute('''INSERT INTO players (name, user, hardware) VALUES (%s, %s, %s);''', (player_name, int(user_id), int(hardware_id)))
             conn.commit()
             print(f"Player {player_name} inserted into the database.")
         except Exception as error:
@@ -48,7 +45,29 @@ def insert_player_to_db(player_name, user_id, hardware_id):
         finally:
             cursor.close()
             conn.close()
+#---------------------------------------------
 
+#check or create user from database
+def check_or_create_user(user_id, hardware_id):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+
+    #check if user exists
+    cursor.execute("SELECT user_id, team FROM users WHERE user_id = ?", (user_id,))
+    user = cursor.fetchone()
+
+    if user:
+        print(f"User {user_id} found, assigned to team {user[1]}")
+        return user[1]
+    else:
+        # assign them a team
+        team = "Red" if random.randint(0, 1) == 0 else "Green"
+        cursor.execute("INSERT INTO users (user_id, hardware_id, team) VALUES (?, ?, ?)", (user_id, hardware_id, team))
+        conn.commit()
+        print("New user added")
+        return team
+    
+    
 #---------------------------------------------
 
 def playerScreen():
