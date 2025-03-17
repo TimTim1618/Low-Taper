@@ -50,27 +50,33 @@ def insert_player_to_db(player_name, user_id):
 #---------------------------------------------
 
 #check or create user from database
-def check_or_create_user(user_id, player_name):
-    conn = connect_to_db()
-    cursor = conn.cursor()
+def get_player_name_from_db(user_id):
+    """Checks if a given user ID exists in the database and returns the player's name if found."""
+    try:
+        connection_params = {
+            'dbname': 'photon',
+            'password': 'student',
+            'host': 'localhost'
+        }
+        conn = psycopg2.connect(**connection_params)
+        cursor = conn.cursor()
 
-    #check if user exists
-    cursor.execute("SELECT user_id, team FROM users WHERE user_id = %s", (int(user_id),))
-    user = cursor.fetchone()
 
-    if user:
-        print(f"User {user_id} found, assigned to team {user[1]}")
-        return user[1]
+        cursor.execute("SELECT player_name FROM players WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+
+
+        conn.close()
+
+
+        if result:
+            return result[0]  # Return the player's name
+        return None  # Return None if the user doesn't exist
     
-        # assign them a team
-    team = "Red" if random.randint(0, 1) == 0 else "Green"
-    cursor.execute("INSERT INTO users (user_id, player_name, team) VALUES (%s, %s, %s)", (int(user_id), player_name, team))
-    conn.commit()
+    except psycopg2.Error as e:
+        print("Database error:", e)
+        return None
 
-    cursor.close()
-    conn.close()
-    print("New user added")
-    return team
     
     
 #---------------------------------------------
@@ -149,49 +155,78 @@ def playerScreen():
             print("Teams are full. Cannot add more players.")
             return
 
-        player_name = name_entry.get().strip()
-        user_id = user_entry.get().strip()
-        hardware_id = hardware_entry.get().strip() 
 
-        if not player_name or not user_id.isdigit() or not hardware_id.isdigit():
-            print("Invalid input. Please enter a name, numeric user ID, and numeric hardware ID.")
+        user_id = user_entry.get().strip()
+        hardware_id = hardware_entry.get().strip()
+        player_name = name_entry.get().strip()
+
+
+        # Validate input
+        if not user_id.isdigit() or not hardware_id.isdigit():
+            print("Invalid input. Please enter a numeric user ID and hardware ID.")
             return
 
-        insert_player_to_db(player_name, user_id)
 
-        # Determine team assignment
+        # Check if the user ID exists in the database
+        existing_player_name = get_player_name_from_db(user_id)
+
+
+        if existing_player_name:
+            print(f"User ID {user_id} already exists. Using existing player name: {existing_player_name}")
+            player_name = existing_player_name  # Use the name from the database
+        elif not player_name:
+            print("New player requires a name.")
+            return
+        else:
+            insert_player_to_db(player_name, user_id)  # Insert only if new
+
+
+        # Assign team
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
         team = random.choice(available_teams)
 
-        # Add player to the correct team in dictionary
+
+        # Update player team
         player_teams[team].append((player_name, user_id))
 
+
+        # Update UI
         row = team_counts[team] + 1
         grid = red_team_grid if team == "Red" else green_team_grid
-        color = "red" if team == "Red" else "green"
+
 
         tk.Label(grid, text=player_name, bg="white", fg="black", width=15).grid(row=row, column=0)
         tk.Label(grid, text=user_id, bg="white", fg="black", width=15).grid(row=row, column=1)
         tk.Label(grid, text=hardware_id, bg="white", fg="black", width=15).grid(row=row, column=2)
 
-        # Transmit player name, user ID to UDP server
-        message = f"{int(user_id)}:{player_name}"
-        udp_response = udp_transmitter.send_message(message)
-        if udp_response:
-            print("UDP response:", udp_response)
 
+        # Transmit player data via UDP
+        message = f"{player_name}:{user_id}:{hardware_id}"
+        try:
+            udp_response = udp_transmitter.send_message(message)
+            if udp_response:
+                print("UDP response:", udp_response)
+        except Exception as e:
+            print("UDP transmission failed:", e)
+
+
+        # Update team count
         team_counts[team] += 1
 
-        print(f"User ID: {user_id}, Playername: {player_name}")
+
+        print(f"Playername: {player_name}, User ID: {user_id}, Hardware ID: {hardware_id}, Team: {team}")
+
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
             print("Both teams are full. Ready to start!")
 
+
         # Clear input fields
         name_entry.delete(0, tk.END)
         user_entry.delete(0, tk.END)
         hardware_entry.delete(0, tk.END)
+
 
     # Submit button
     submit_button = tk.Button(bottom_bar, text="Submit", command=store_info)
