@@ -61,17 +61,15 @@ def get_player_name_from_db(user_id):
         conn = psycopg2.connect(**connection_params)
         cursor = conn.cursor()
 
-
-        cursor.execute("SELECT player_name FROM players WHERE user_id = %s", (user_id,))
+        # Use correct column names from the players table
+        cursor.execute("SELECT codename FROM players WHERE id = %s;", (user_id,))
         result = cursor.fetchone()
-
 
         conn.close()
 
-
         if result:
-            return result[0]  # Return the player's name
-        return None  # Return None if the user doesn't exist
+            return result[0]  
+        return None 
     
     except psycopg2.Error as e:
         print("Database error:", e)
