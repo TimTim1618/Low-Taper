@@ -22,7 +22,9 @@ def connect_to_db():
     # Define connection parameters
     # We only need "photon" database
     connection_params = {
-        'dbname': 'photon'
+        'dbname': 'photon',
+        'password': 'student',
+        'host': 'localhost'
     }
     
     try:
@@ -32,12 +34,12 @@ def connect_to_db():
         print(f"Error connecting to PostgreSQL database: {error}")
         return None
 
-def insert_player_to_db(player_name, user_id, hardware_id):
+def insert_player_to_db(player_name, user_id):
     conn = connect_to_db()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('''INSERT INTO players (name, user, hardware) VALUES (%s, %s, %s);''', (player_name, int(user_id), int(hardware_id)))
+            cursor.execute('''INSERT INTO players (id, codename) VALUES (%s, %s);''', (int(user_id), player_name))
             conn.commit()
             print(f"Player {player_name} inserted into the database.")
         except Exception as error:
@@ -48,24 +50,27 @@ def insert_player_to_db(player_name, user_id, hardware_id):
 #---------------------------------------------
 
 #check or create user from database
-def check_or_create_user(user_id, hardware_id):
+def check_or_create_user(user_id, player_name):
     conn = connect_to_db()
     cursor = conn.cursor()
 
     #check if user exists
-    cursor.execute("SELECT user_id, team FROM users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT user_id, team FROM users WHERE user_id = %s", (int(user_id),))
     user = cursor.fetchone()
 
     if user:
         print(f"User {user_id} found, assigned to team {user[1]}")
         return user[1]
-    else:
+    
         # assign them a team
-        team = "Red" if random.randint(0, 1) == 0 else "Green"
-        cursor.execute("INSERT INTO users (user_id, hardware_id, team) VALUES (?, ?, ?)", (user_id, hardware_id, team))
-        conn.commit()
-        print("New user added")
-        return team
+    team = "Red" if random.randint(0, 1) == 0 else "Green"
+    cursor.execute("INSERT INTO users (user_id, player_name, team) VALUES (%s, %s, %s)", (int(user_id), player_name, team))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+    print("New user added")
+    return team
     
     
 #---------------------------------------------
@@ -152,7 +157,7 @@ def playerScreen():
             print("Invalid input. Please enter a name, numeric user ID, and numeric hardware ID.")
             return
 
-        insert_player_to_db(player_name, user_id, hardware_id)
+        insert_player_to_db(player_name, user_id)
 
         # Determine team assignment
         available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
@@ -169,15 +174,15 @@ def playerScreen():
         tk.Label(grid, text=user_id, bg="white", fg="black", width=15).grid(row=row, column=1)
         tk.Label(grid, text=hardware_id, bg="white", fg="black", width=15).grid(row=row, column=2)
 
-        # Transmit player name, user ID, and hardware ID to UDP server
-        message = f"{player_name}:{user_id}:{hardware_id}"
+        # Transmit player name, user ID to UDP server
+        message = f"{int(user_id)}:{player_name}"
         udp_response = udp_transmitter.send_message(message)
         if udp_response:
             print("UDP response:", udp_response)
 
         team_counts[team] += 1
 
-        print(f"Playername: {player_name}, User ID: {user_id}, Hardware ID: {hardware_id}, Team: {team}")
+        print(f"User ID: {user_id}, Playername: {player_name}")
 
         # Check if teams are full
         if team_counts["Red"] == 2 and team_counts["Green"] == 2:
