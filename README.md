@@ -9,6 +9,7 @@ How to install python3 - sudo apt update  ->  sudo apt install python3
 How to install pip - sudo apt install python3-pip
 How to install Tk - sudo apt update  ->  sudo apt install python3-tk
 How to install psycopg2 - pip install psycopg2
+                  - if this command doesn't work try adding "-binary" to the end of the command
 How to install pillow - pip install pillow
 How to install pygame - pip intall pygame
 
