@@ -40,7 +40,7 @@ def countdown_timer(player_teams):
     # Load countdown images with numbers overlaid on the background
     countdown_images = []
     #countdown set at 3 seconds until we turn it in... then change it to 30.
-    for i in range(3, -1, -1): 
+    for i in range(30, -1, -1): 
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA")
