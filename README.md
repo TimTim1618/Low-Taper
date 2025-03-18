@@ -26,7 +26,9 @@ Game commands
       F3 - Switch to play action screen
       F1 - Switch back to player screen
       F12 - Clear players 
-
+#---------------------------------------------------------
+Quick Notes
+  When the database contains a codename with an id, if the user tries to type in a different name with the same id it will display the name from the database (not the new name typed in)
 
           
 
