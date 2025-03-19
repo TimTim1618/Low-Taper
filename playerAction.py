@@ -5,6 +5,7 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 import pygame
 import os
 import time
+import random
 
 def player_action_main(previous_window, player_teams):
     previous_window.destroy()
@@ -20,10 +21,6 @@ def countdown_timer(player_teams):
     countdown_label = Label(countdown_window, bg="black")
     countdown_label.pack(expand=True)
 
-    #play audio for countdown
-    pygame.mixer.init()
-    # sound_path = os.path.join("photon_tracks", "Track01.mp3")
-    # pygame.mixer.Sound(sound_path).play()
 
     image_folder = "countdown_images"
 
@@ -56,17 +53,28 @@ def countdown_timer(player_teams):
         
 
 
+    def play_track(track_path):
+        pygame.mixer.music.load(track_path)  # Load the audio file
+        pygame.mixer.music.play()  # Play the audio
+        print(f"Now playing: {os.path.basename(track_path)}")  # Display the track name
+
+
+
     def update_countdown(index):
         if index == -1 and alert_img:
             countdown_label.config(image=alert_img)
             countdown_window.after(1000, update_countdown, 0)
     #Audio for countdown / we will implement this when needed in future sprints 
-        # elif index == 12:
-        #     track_path = os.path.join("photon_tracks", "Track02.mp3")
-        #     pygame.mixer.music.load(track_path)
-        #     pygame.mixer.music.play()
-        #     countdown_label.config(image=countdown_images[index])
-        #     countdown_window.after(1000, update_countdown, index + 1)
+        elif index == 12:
+            pygame.mixer.init()
+             #play audio for countdown
+            MUSIC_FOLDER = "photon_tracks"
+            sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
+            random.shuffle(sound_files)
+            if sound_files:
+                play_track(sound_files[0])
+            countdown_label.config(image=countdown_images[index])
+            countdown_window.after(1000, update_countdown, index + 1)
         elif index < len(countdown_images):
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
@@ -76,6 +84,8 @@ def countdown_timer(player_teams):
         
     update_countdown(-1) 
     countdown_window.mainloop()
+
+
 
 def action_log(player_teams):
     action_window = tk.Tk()
