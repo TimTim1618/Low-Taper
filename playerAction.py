@@ -143,6 +143,19 @@ def action_log(player_teams):
     timer_label = tk.Label(bottom_frame, text="Time Remaining: 6:00", font=("Arial", 16, "bold"), fg="white", bg="black")
     timer_label.pack()
 
+
+    def update_timer(time_left):
+        if time_left >= 0:
+                minutes = time_left // 60
+                seconds = time_left % 60
+                timer_label.config(text=f"Time Remaining: {minutes}:{seconds:02d}")
+                action_window.after(1000, update_timer, time_left - 1)
+        else:
+            timer_label.config(text="Times up!")
+
+
+    update_timer(360)
+
     # Switch back to player screen
     def on_f1(event):
         action_window.destroy()
