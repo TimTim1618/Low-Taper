@@ -37,7 +37,7 @@ def countdown_timer(player_teams):
     # Load countdown images with numbers overlaid on the background
     countdown_images = []
     #countdown set at 3 seconds until we turn it in... then change it to 30.
-    for i in range(30, -1, -1): 
+    for i in range(1, -1, -1): 
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA")
@@ -53,10 +53,10 @@ def countdown_timer(player_teams):
         
 
 
-    def play_track(track_path):
-        pygame.mixer.music.load(track_path)  # Load the audio file
-        pygame.mixer.music.play()  # Play the audio
-        print(f"Now playing: {os.path.basename(track_path)}")  # Display the track name
+    # def play_track(track_path):
+    #     pygame.mixer.music.load(track_path)  # Load the audio file
+    #     pygame.mixer.music.play()  # Play the audio
+    #     print(f"Now playing: {os.path.basename(track_path)}")  # Display the track name
 
 
 
