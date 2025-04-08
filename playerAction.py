@@ -188,7 +188,6 @@ def action_log(player_teams):
 
     def listen_for_signal():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(("0.0.0.0", 7501))
         while True:
             data, _ = sock.recvfrom(1024)
             message = data.decode()
