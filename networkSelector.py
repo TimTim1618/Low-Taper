@@ -3,94 +3,68 @@ import socket
 
 class NetworkSelector:
     def __init__(self):
-        self.predefined_networks = [
-            ("Localhost", "127.0.0.1", 7501),
-        ]
+        self.predefined_networks = ["127.0.0.1"]
         self.selected_ip = "127.0.0.1"
-        self.selected_port = 7501
 
     def select_network(self):
         print("\nSelect a network to connect to:")
-        for i, (name, ip, port) in enumerate(self.predefined_networks, start=1):
-            print(f"{i}. {name} ({ip}:{port})")
+        for i, ip in enumerate(self.predefined_networks, start=1):
+            print(f"{i}. {ip}")
         print(f"{len(self.predefined_networks) + 1}. Enter custom network")
 
         try:
             choice = input(f"Enter your choice (1-{len(self.predefined_networks) + 1}): ")
-        except EOFError:
-            print("No input provided, using default network.")
-            choice = "1"
-
-        try:
             choice = int(choice)
             if 1 <= choice <= len(self.predefined_networks):
-                self.selected_ip, self.selected_port = self.predefined_networks[choice - 1][1], self.predefined_networks[choice - 1][2]
+                self.selected_ip = self.predefined_networks[choice - 1]
             elif choice == len(self.predefined_networks) + 1:
                 self.selected_ip = input("Enter IP address: ")
-                self.selected_port = int(input("Enter Port number: "))
             else:
                 print("Invalid choice. Using default network.")
-            # Print the selected network at the end
-            print(f"Selected Network: {self.selected_ip}:{self.selected_port}")
         except ValueError:
             print("Invalid input. Using default network.")
 
+        print(f"Selected Network: {self.selected_ip}")
+
     def get_selected_network(self):
-        return self.selected_ip, self.selected_port
+        return self.selected_ip
 
 class UdpTransmitter:
-    def __init__(self, ip="127.0.0.1", port=7501, client_port=7500, buffer_size=1024):
+    def __init__(self, ip="127.0.0.1", send_port=7500, listen_port=7501, buffer_size=1024):
         self.ip = ip
-        self.port = port
-        self.client_port = client_port
+        self.send_port = send_port
+        self.listen_port = listen_port
         self.buffer_size = buffer_size
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.bind(("", self.listen_port))
 
-    def set_network(self, ip, port):
+    def set_network(self, ip):
         self.ip = ip
-        self.port = port
 
-    def send_message(self, message, receive_response=True):
+    def send_message(self, message):
         bytes_to_send = message.encode()
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            udp_socket.bind(("", self.client_port))
-        except socket.error as e:
-            print("Error binding to client port:", e)
-            udp_socket.close()
-            return None
-
-        try:
-            udp_socket.sendto(bytes_to_send, (self.ip, self.port))
-            print(f"Sent message: '{message}' from client port {self.client_port} to {(self.ip, self.port)}")
-            if receive_response:
-                udp_socket.settimeout(2)
-                try:
-                    response, server_address = udp_socket.recvfrom(self.buffer_size)
-                    print(f"Received response from {server_address}: {response.decode()}")
-                    return response.decode()
-                except socket.timeout:
-                    print("No response received from the server.")
+            self.udp_socket.sendto(bytes_to_send, (self.ip, self.send_port))
+            print(f"Sent message: '{message}' to {(self.ip, self.send_port)}")
         except socket.error as e:
             print("Error sending UDP message:", e)
-        finally:
-            udp_socket.close()
+
+    def listen_for_response(self):
+        try:
+            print("Listening for responses...")
+            response, server_address = self.udp_socket.recvfrom(self.buffer_size)
+            print(f"Received response from {server_address}: {response.decode()}")
+            return response.decode()
+        except socket.timeout:
+            print("No response received.")
 
 if __name__ == "__main__":
-    # If IP and port are passed as command-line arguments, use them;
-    # otherwise, run the network selector.
-    if len(sys.argv) >= 3:
+    if len(sys.argv) >= 2:
         ip = sys.argv[1]
-        try:
-            port = int(sys.argv[2])
-        except ValueError:
-            print("Invalid port provided. Using default.")
-            ip, port = "127.0.0.1", 7501
     else:
         selector = NetworkSelector()
         selector.select_network()
-        ip, port = selector.get_selected_network()
+        ip = selector.get_selected_network()
 
-    # Create and use the UdpTransmitter
-    transmitter = UdpTransmitter(ip=ip, port=port)
-    # For demonstration, send a test message
-    transmitter.send_message("Hello, network!", receive_response=False)
+    transmitter = UdpTransmitter(ip=ip)
+    transmitter.send_message("Hello, network!")

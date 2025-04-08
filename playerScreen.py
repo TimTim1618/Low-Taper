@@ -147,20 +147,54 @@ def playerScreen():
 
     player_teams = {"Red": [], "Green": []}
 
+    #----------------------------------------------
+    # initialize player scores and B status
+    players_scores = {
+        "red1": {"score": 0, "has_B": False},
+        "red2": {"score": 0, "has_B": False},
+        "green1": {"score": 0, "has_B": False},
+        "green2": {"score": 0, "has_B": False}
+    }
+
+
+    def update_score_and_B_status(player_name):
+        # update score and check if player has B status
+        if player_name in players_scores:
+            player_data = players_scores[player_name]
+
+            # update score when base hit
+            player_data["score"] += 100
+
+            # assign B status if not already given
+            if not player_data["has_B"]:
+                player_data["has_B"] = True
+                return f"{player_name}: B"
+            else:
+                return player_name
+        return player_name
+    #----------------------------------------------
+
+
     def store_info():
-        """Randomly assigns a player to a team until both teams have 2 players."""
-        if team_counts["Red"] >= 2 and team_counts["Green"] >= 2:
+        # both teams have 15 players.
+        if team_counts["Red"] >= 15 and team_counts["Green"] >= 15:
             print("Teams are full. Cannot add more players.")
             return
 
-
-        user_id = user_entry.get().strip()
-        hardware_id = hardware_entry.get().strip()
-        player_name = name_entry.get().strip()
-
-
+        try:
+            user_id = user_entry.get().strip()
+            hardware_id = int(hardware_entry.get().strip())
+            player_name = name_entry.get().strip()
+        except ValueError:
+            print("Hard ID must be an integer.")
+            return
+        
+        if not user_id.isdigit():
+            print("User ID must be a number.")
+            return
+        
         # Validate input
-        if not user_id.isdigit() or not hardware_id.isdigit():
+        if not str(user_id).isdigit() or not str(hardware_id).isdigit():
             print("Invalid input. Please enter a numeric user ID and hardware ID.")
             return
 
@@ -180,12 +214,17 @@ def playerScreen():
 
 
         # Assign team
-        available_teams = [team for team in ["Red", "Green"] if team_counts[team] < 2]
-        team = random.choice(available_teams)
+        if hardware_id % 2 == 1 and team_counts["Red"] < 15:
+            team = "Red"
+        elif hardware_id % 2 == 0 and team_counts["Green"] < 15:
+            team = "Green"
+        else:
+            print("No available teams. Cannot assign player.")
+            return
 
 
         # Update player team
-        player_teams[team].append((player_name, user_id))
+        player_teams[team].append((player_name, user_id, hardware_id))
 
 
         # Update UI
@@ -216,7 +255,7 @@ def playerScreen():
 
 
         # Check if teams are full
-        if team_counts["Red"] == 2 and team_counts["Green"] == 2:
+        if team_counts["Red"] == 15 and team_counts["Green"] == 15:
             print("Both teams are full. Ready to start!")
 
 

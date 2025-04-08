@@ -6,6 +6,7 @@ import pygame
 import os
 import time
 import random
+import threading
 
 def player_action_main(previous_window, player_teams):
     previous_window.destroy()
@@ -50,7 +51,6 @@ def countdown_timer(player_teams):
             combined.paste(num_img, num_position, num_img)
 
             countdown_images.append(ImageTk.PhotoImage(combined))
-        
 
 
     # def play_track(track_path):
@@ -72,7 +72,8 @@ def countdown_timer(player_teams):
             sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
             random.shuffle(sound_files)
             if sound_files:
-                play_track(sound_files[0])
+                # play_track(sound_files[0])
+                print("hello")
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
         elif index < len(countdown_images):
@@ -85,7 +86,19 @@ def countdown_timer(player_teams):
     update_countdown(-1) 
     countdown_window.mainloop()
 
-
+def send_start_signal():
+        # This function sends the "202" message to the traffic generator.
+        import socket
+        signal_message = "202"
+        target_address = ("127.0.0.1", 7500)  # traffic generator's receiving address
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(signal_message.encode(), target_address)
+            print("Start signal '202' sent to traffic generator.")
+        except Exception as e:
+            print("Error sending start signal:", e)
+        finally:
+            sock.close()
 
 def action_log(player_teams):
     action_window = tk.Tk()
@@ -108,16 +121,21 @@ def action_log(player_teams):
 
     # Initialize scores for each player and display them
     player_scores = {}
+    player_labels = {}
 
-    for index, (name, _) in enumerate(player_teams["Red"], start=1):
-        player_scores[f"red_player{index}_score"] = 0  # Start with score 0
-        tk.Label(left_team_frame, text=f"{name} - Score: {player_scores[f'red_player{index}_score']}", 
-                 font=("Arial", 14), fg="red", bg="black").pack()
+    for index, (name, _, _) in enumerate(player_teams["Red"], start=1):
+        key = f"red_player{index}_score"
+        player_scores[key] = 0
+        label = tk.Label(left_team_frame, text=f"{name} - Score: 0", font=("Arial", 14), fg="red", bg="black")
+        label.pack()
+        player_labels[key] = label
     
-    for index, (name, _) in enumerate(player_teams["Green"], start=1):
-        player_scores[f"green_player{index}_score"] = 0  # Start with score 0
-        tk.Label(right_team_frame, text=f"{name} - Score: {player_scores[f'green_player{index}_score']}", 
-                 font=("Arial", 14), fg="green", bg="black").pack()
+    for index, (name, _, _) in enumerate(player_teams["Green"], start=1):
+        key = f"green_player{index}_score"
+        player_scores[key] = 0
+        label = tk.Label(right_team_frame, text=f"{name} - Score: 0", font=("Arial", 14), fg="green", bg="black")
+        label.pack()
+        player_labels[key] = label
 
     # Middle frame for game actions
     middle_frame = tk.Frame(action_window, bg='black', highlightbackground="yellow", highlightthickness=2)
@@ -155,6 +173,70 @@ def action_log(player_teams):
 
 
     update_timer(360)
+#############################################
+    # add points based on signal
+    def process_signal(code, hardware_id):
+        nonlocal player_scores, player_labels
+
+        # Split signal into hardware_id and base_code
+        hardware_id, base_code = code.split(":")
+        base_code = base_code.strip()
+        player_name = None
+
+
+        # Split signal into player1_id and player2_id
+        player1_id, player2_id = code.split(":")
+        player1_id = player1_id.strip()
+        player2_id = player2_id.strip()
+
+        # Find players associated with player1_id and player2_id
+        player1_name = None
+        player2_name = None
+        for team in ["Red", "Green"]:
+            for player, player_hardware_id in player_teams[team]:
+                if player_hardware_id == player1_id:
+                    player1_name = player
+                if player_hardware_id == player2_id:
+                    player2_name = player
+                if player1_name and player2_name:
+                    break
+            if player1_name and player2_name:
+                break
+
+        if not player1_name or not player2_name:
+            action_log.insert(tk.END, f"Unknown hardware IDs: {player1_id}, {player2_id}\n")
+            return
+
+        # Player vs Player collision (gain 10 points)
+        if player1_id != player2_id:  # Ensure it's not a self-hit
+            action_log.insert(tk.END, f"Player {player1_name} hit Player {player2_name} (ID: {player1_id} -> {player2_id}) and gained 10 points!\n")
+            player_scores[f"red_player{player1_id}_score"] += 10  # Example: Update red team's player 1 score
+            player_scores[f"green_player{player2_id}_score"] += 10  # Example: Update green team's player 2 score
+
+            # Update score label
+            player_labels[f"red_player{player1_id}_score"].config(text=f"{player1_name} - Score: {player_scores[f'red_player{player1_id}_score']}")
+            player_labels[f"green_player{player2_id}_score"].config(text=f"{player2_name} - Score: {player_scores[f'green_player{player2_id}_score']}")
+
+        if base_code == "53":  # Red base has been scored on
+            action_log.insert(tk.END, f"Red base has been hit by player {player_name} (ID: {hardware_id})\n")
+            for i in range(1, len(player_teams["Green"]) + 1):
+                key = f"green_player{i}_score"
+                player_scores[key] += 100  # Base score
+                player_labels[key].config(text=f"{player_teams['Green'][i-1][0]} - Score: {player_scores[key]}")
+        elif base_code == "43":  # Green base has been scored on
+            action_log.insert(tk.END, f"Green base has been hit by player {player_name} (ID: {hardware_id})\n")
+            for i in range(1, len(player_teams["Red"]) + 1):
+                key = f"red_player{i}_score"
+                player_scores[key] += 100  # Base score
+                player_labels[key].config(text=f"{player_teams['Red'][i-1][0]} - Score: {player_scores[key]}")
+
+
+
+    ###############################
+    # testing signal until using traffic generator
+    
+
+    #####################################
 
     # Switch back to player screen
     def on_f1(event):
