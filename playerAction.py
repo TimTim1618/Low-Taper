@@ -1,12 +1,14 @@
 import playerScreen
+from networkSelector import UdpTransmitter
 import tkinter as tk
 from tkinter import Label
-from PIL import Image, ImageTk, ImageDraw, ImageFont
+from PIL import Image, ImageTk
 import pygame
 import os
 import time
 import random
 import threading
+import socket
 
 def player_action_main(previous_window, player_teams):
     previous_window.destroy()
@@ -18,7 +20,6 @@ def countdown_timer(player_teams):
     countdown_window.geometry("800x600")
     countdown_window.configure(bg="black")
 
-    # Label to display countdown images
     countdown_label = Label(countdown_window, bg="black")
     countdown_label.pack(expand=True)
 
@@ -27,68 +28,43 @@ def countdown_timer(player_teams):
     background = Image.open(background_path) if os.path.exists(background_path) else None
 
     alert_path = os.path.join(image_folder, "alert-on.tif")
-    alert_img = Image.open(alert_path) if os.path.exists(alert_path) else None
-    alert_img = alert_img.resize((800, 600)) if alert_img else None
+    alert_img = Image.open(alert_path).resize((800, 600)) if os.path.exists(alert_path) else None
     alert_img = ImageTk.PhotoImage(alert_img) if alert_img else None
 
     countdown_images = []
     for i in range(1, -1, -1):
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
-            num_img = Image.open(num_path).convert("RGBA")
+            num_img = Image.open(num_path).convert("RGBA").resize((100, 100))
             combined = background.copy().convert("RGBA")
-            num_img = num_img.resize((100, 100))
-            num_position = ((combined.width - num_img.width) // 2, ((combined.height - num_img.height) // 2) + 50)
-            combined.paste(num_img, num_position, num_img)
+            position = ((combined.width - num_img.width) // 2, ((combined.height - num_img.height) // 2) + 50)
+            combined.paste(num_img, position, num_img)
             countdown_images.append(ImageTk.PhotoImage(combined))
-
-
-    # def play_track(track_path):
-    #     pygame.mixer.music.load(track_path)  # Load the audio file
-    #     pygame.mixer.music.play()  # Play the audio
-    #     print(f"Now playing: {os.path.basename(track_path)}")  # Display the track name
-
-
 
     def update_countdown(index):
         if index == -1 and alert_img:
             countdown_label.config(image=alert_img)
             countdown_window.after(1000, update_countdown, 0)
-        elif index == 12:
-            pygame.mixer.init()
-            MUSIC_FOLDER = "photon_tracks"
-            sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
-            random.shuffle(sound_files)
-            if sound_files:
-                # play_track(sound_files[0])
-                print("hello")
-            countdown_label.config(image=countdown_images[index])
-            countdown_window.after(1000, update_countdown, index + 1)
         elif index < len(countdown_images):
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
         else:
-            # Send "202" start signal to the traffic generator
             send_start_signal()
             countdown_window.destroy()
-            action_log(player_teams) 
-        
-    update_countdown(-1) 
+            action_log(player_teams)
+
+    update_countdown(-1)
     countdown_window.mainloop()
 
 def send_start_signal():
-        # This function sends the "202" message to the traffic generator.
-        import socket
-        signal_message = "202"
-        target_address = ("127.0.0.1", 7500)  # traffic generator's receiving address
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    signal_message = "202"
+    target_address = ("127.0.0.1", 7500)
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         try:
             sock.sendto(signal_message.encode(), target_address)
             print("Start signal '202' sent to traffic generator.")
         except Exception as e:
             print("Error sending start signal:", e)
-        finally:
-            sock.close()
 
 def action_log(player_teams):
     action_window = tk.Tk()
@@ -96,44 +72,44 @@ def action_log(player_teams):
     action_window.geometry("800x600")
     action_window.configure(bg="black")
 
-    # Top frame for team scores
+    transmitter = UdpTransmitter()
+
     top_frame = tk.Frame(action_window, bg='black')
     top_frame.pack(fill="x", padx=10, pady=5)
 
     left_team_frame = tk.Frame(top_frame, bg='black')
     left_team_frame.pack(side='left', expand=True)
-
     right_team_frame = tk.Frame(top_frame, bg='black')
     right_team_frame.pack(side='right', expand=True)
 
     tk.Label(left_team_frame, text="RED TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
     tk.Label(right_team_frame, text="GREEN TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
 
-    # Initialize scores for each player and display them
     player_scores = {}
     player_labels = {}
+    hardware_to_key = {}
 
-    for index, (name, _, _) in enumerate(player_teams["Red"], start=1):
+    for index, (name, hardware_id, _) in enumerate(player_teams["Red"], start=1):
         key = f"red_player{index}_score"
         player_scores[key] = 0
         label = tk.Label(left_team_frame, text=f"{name} - Score: 0", font=("Arial", 14), fg="red", bg="black")
         label.pack()
         player_labels[key] = label
-    
-    for index, (name, _, _) in enumerate(player_teams["Green"], start=1):
+        hardware_to_key[hardware_id] = key
+
+    for index, (name, hardware_id, _) in enumerate(player_teams["Green"], start=1):
         key = f"green_player{index}_score"
         player_scores[key] = 0
         label = tk.Label(right_team_frame, text=f"{name} - Score: 0", font=("Arial", 14), fg="green", bg="black")
         label.pack()
         player_labels[key] = label
+        hardware_to_key[hardware_id] = key
 
-    # Middle frame for game actions
     middle_frame = tk.Frame(action_window, bg='black', highlightbackground="yellow", highlightthickness=2)
     middle_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     tk.Label(middle_frame, text="Current Game Action", font=("Arial", 14, "bold"), fg="white", bg="black").pack()
 
-    # Action Log
     action_log_frame = tk.Frame(middle_frame, bg="black")
     action_log_frame.pack(fill="both", expand=True)
 
@@ -144,99 +120,80 @@ def action_log(player_teams):
     scrollbar.pack(side="right", fill="y")
     action_log.config(yscrollcommand=scrollbar.set)
 
-    # Bottom frame for timer
     bottom_frame = tk.Frame(action_window, bg='black')
     bottom_frame.pack(fill="x", padx=10, pady=5)
 
     timer_label = tk.Label(bottom_frame, text="Time Remaining: 6:00", font=("Arial", 16, "bold"), fg="white", bg="black")
     timer_label.pack()
 
-
     def update_timer(time_left):
         if time_left >= 0:
-                minutes = time_left // 60
-                seconds = time_left % 60
-                timer_label.config(text=f"Time Remaining: {minutes}:{seconds:02d}")
-                action_window.after(1000, update_timer, time_left - 1)
+            minutes = time_left // 60
+            seconds = time_left % 60
+            timer_label.config(text=f"Time Remaining: {minutes}:{seconds:02d}")
+            action_window.after(1000, update_timer, time_left - 1)
         else:
             timer_label.config(text="Times up!")
 
-
     update_timer(360)
-#############################################
-    # add points based on signal
-    def process_signal(code, hardware_id):
-        nonlocal player_scores, player_labels
 
-        # Split signal into hardware_id and base_code
-        hardware_id, base_code = code.split(":")
-        base_code = base_code.strip()
-        player_name = None
-
-
-        # Split signal into player1_id and player2_id
-        player1_id, player2_id = code.split(":")
-        player1_id = player1_id.strip()
-        player2_id = player2_id.strip()
-
-        # Find players associated with player1_id and player2_id
-        player1_name = None
-        player2_name = None
-        for team in ["Red", "Green"]:
-            for player, player_hardware_id in player_teams[team]:
-                if player_hardware_id == player1_id:
-                    player1_name = player
-                if player_hardware_id == player2_id:
-                    player2_name = player
-                if player1_name and player2_name:
-                    break
-            if player1_name and player2_name:
-                break
-
-        if not player1_name or not player2_name:
-            action_log.insert(tk.END, f"Unknown hardware IDs: {player1_id}, {player2_id}\n")
-            return
-
-        # Player vs Player collision (gain 10 points)
-        if player1_id != player2_id:  # Ensure it's not a self-hit
-            action_log.insert(tk.END, f"Player {player1_name} hit Player {player2_name} (ID: {player1_id} -> {player2_id}) and gained 10 points!\n")
-            player_scores[f"red_player{player1_id}_score"] += 10  # Example: Update red team's player 1 score
-            player_scores[f"green_player{player2_id}_score"] += 10  # Example: Update green team's player 2 score
-
-            # Update score label
-            player_labels[f"red_player{player1_id}_score"].config(text=f"{player1_name} - Score: {player_scores[f'red_player{player1_id}_score']}")
-            player_labels[f"green_player{player2_id}_score"].config(text=f"{player2_name} - Score: {player_scores[f'green_player{player2_id}_score']}")
-
-        if base_code == "53":  # Red base has been scored on
-            action_log.insert(tk.END, f"Red base has been hit by player {player_name} (ID: {hardware_id})\n")
-            for i in range(1, len(player_teams["Green"]) + 1):
-                key = f"green_player{i}_score"
-                player_scores[key] += 100  # Base score
-                player_labels[key].config(text=f"{player_teams['Green'][i-1][0]} - Score: {player_scores[key]}")
-        elif base_code == "43":  # Green base has been scored on
-            action_log.insert(tk.END, f"Green base has been hit by player {player_name} (ID: {hardware_id})\n")
-            for i in range(1, len(player_teams["Red"]) + 1):
-                key = f"red_player{i}_score"
-                player_scores[key] += 100  # Base score
-                player_labels[key].config(text=f"{player_teams['Red'][i-1][0]} - Score: {player_scores[key]}")
-
-
-
-    ###############################
-    # testing signal until using traffic generator
-    
-
-    #####################################
-
-    # Switch back to player screen
     def on_f1(event):
         action_window.destroy()
         playerScreen.playerScreen()
-    
+
     action_window.bind("<F1>", on_f1)
 
-    # f1_button = tk.Button(action_window, text="Start", command=on_f1)
-    # f1_button.pack(pady=20)
+    def process_signal(message):
+        print("Signal received:", message)
+        try:
+            hardware_id, base_code = message.strip().split(":")
+        except ValueError:
+            action_log.insert(tk.END, f"Malformed signal: {message}\n")
+            return
+
+        if base_code in ("53", "43"):  # base hit
+            team_hit = "Red" if base_code == "53" else "Green"
+            team_awarded = "Green" if team_hit == "Red" else "Red"
+            action_log.insert(tk.END, f"{team_hit} base has been hit by {hardware_id}\n")
+            for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
+                key = f"{team_awarded.lower()}_player{i}_score"
+                player_scores[key] += 100
+                player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+        else:  # player vs player
+            try:
+                player1_id, player2_id = message.strip().split(":")
+            except ValueError:
+                action_log.insert(tk.END, f"Invalid player hit signal: {message}\n")
+                return
+
+            if player1_id != player2_id:
+                key1 = hardware_to_key.get(player1_id)
+                key2 = hardware_to_key.get(player2_id)
+
+                if key1 and key2:
+                    player_scores[key1] += 10
+                    player_scores[key2] += 10
+                    player_labels[key1].config(text=f"{get_name_from_id(player1_id)} - Score: {player_scores[key1]}")
+                    player_labels[key2].config(text=f"{get_name_from_id(player2_id)} - Score: {player_scores[key2]}")
+                    action_log.insert(tk.END, f"{get_name_from_id(player1_id)} hit {get_name_from_id(player2_id)}. +10 each\n")
+                else:
+                    action_log.insert(tk.END, f"Unknown players: {player1_id}, {player2_id}\n")
+
+    def get_name_from_id(hardware_id):
+        for team in ["Red", "Green"]:
+            for name, h_id, _ in player_teams[team]:
+                if h_id == hardware_id:
+                    return name
+        return "Unknown"
+
+    def listen_for_signal():
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.bind(("0.0.0.0", 7501))
+        while True:
+            data, _ = sock.recvfrom(1024)
+            message = data.decode()
+            action_window.after(0, process_signal, message)
+
+    threading.Thread(target=listen_for_signal, daemon=True).start()
 
     action_window.mainloop()
-#
