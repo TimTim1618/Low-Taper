@@ -22,34 +22,24 @@ def countdown_timer(player_teams):
     countdown_label = Label(countdown_window, bg="black")
     countdown_label.pack(expand=True)
 
-
     image_folder = "countdown_images"
-
-    # Load background image
     background_path = os.path.join(image_folder, "background.tif")
     background = Image.open(background_path) if os.path.exists(background_path) else None
 
-    # Load alert image
     alert_path = os.path.join(image_folder, "alert-on.tif")
     alert_img = Image.open(alert_path) if os.path.exists(alert_path) else None
     alert_img = alert_img.resize((800, 600)) if alert_img else None
     alert_img = ImageTk.PhotoImage(alert_img) if alert_img else None
 
-    # Load countdown images with numbers overlaid on the background
     countdown_images = []
-    #countdown set at 3 seconds until we turn it in... then change it to 30.
-    for i in range(1, -1, -1): 
+    for i in range(1, -1, -1):
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA")
-            
-            # Overlay the countdown number onto the background
             combined = background.copy().convert("RGBA")
-            num_img = num_img.resize((100, 100))  
+            num_img = num_img.resize((100, 100))
             num_position = ((combined.width - num_img.width) // 2, ((combined.height - num_img.height) // 2) + 50)
-
             combined.paste(num_img, num_position, num_img)
-
             countdown_images.append(ImageTk.PhotoImage(combined))
 
 
@@ -64,10 +54,8 @@ def countdown_timer(player_teams):
         if index == -1 and alert_img:
             countdown_label.config(image=alert_img)
             countdown_window.after(1000, update_countdown, 0)
-    #Audio for countdown / we will implement this when needed in future sprints 
         elif index == 12:
             pygame.mixer.init()
-             #play audio for countdown
             MUSIC_FOLDER = "photon_tracks"
             sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
             random.shuffle(sound_files)
@@ -80,7 +68,9 @@ def countdown_timer(player_teams):
             countdown_label.config(image=countdown_images[index])
             countdown_window.after(1000, update_countdown, index + 1)
         else:
-            countdown_window.destroy() 
+            # Send "202" start signal to the traffic generator
+            send_start_signal()
+            countdown_window.destroy()
             action_log(player_teams) 
         
     update_countdown(-1) 
