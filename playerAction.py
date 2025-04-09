@@ -167,6 +167,9 @@ def action_log(player_teams):
     update_timer(360)
 
     def on_f1(event):
+        # Set a flag to stop the listener thread
+        global listener_running
+        listener_running = False
         action_window.destroy()
         playerScreen.playerScreen()
 
@@ -201,9 +204,9 @@ def action_log(player_teams):
                             if key1 and key2:
                                 player_scores[key1] += 10
                                 player_scores[key2] += 10
-                                player_labels[key1].config(text=f"{get_name_from_id(player1_id)} - Score: {player_scores[key1]}")
-                                player_labels[key2].config(text=f"{get_name_from_id(player2_id)} - Score: {player_scores[key2]}")
-                                action_log_text.insert(tk.END, f"{get_name_from_id(player1_id)} hit {get_name_from_id(player2_id)}. +10 each\n")
+                                player_labels[key1].config(text=f"{get_name_from_id(player1_id, player_teams)} - Score: {player_scores[key1]}")
+                                player_labels[key2].config(text=f"{get_name_from_id(player2_id, player_teams)} - Score: {player_scores[key2]}")
+                                action_log_text.insert(tk.END, f"{get_name_from_id(player1_id, player_teams)} hit {get_name_from_id(player2_id, player_teams)}. +10 each\n")
                                 action_log_text.see(tk.END)
                             else:
                                 action_log_text.insert(tk.END, f"Unknown players: {player1_id}, {player2_id}\n")
@@ -218,37 +221,59 @@ def action_log(player_teams):
             action_log_text.insert(tk.END, f"Error processing signal: {e}\n")
             action_log_text.see(tk.END)
 
-    
     def listen_for_signal(process_signal):
-        listen_address = ("127.0.0.1", 7501)
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        server_address = ('127.0.0.1', 7501)  # Traffic generator sending address
         
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            try:
-                sock.bind(listen_address)
-                print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
-                
-                while True:
-                    try:
-                        data, addr = sock.recvfrom(1024)
-                        message = data.decode('utf-8')
-                        print(f"Received: {message} from {addr}")
+        try:
+            server_socket.bind(server_address)
+            logging.info(f"Listening for signals on {server_address}")
+            
+            # Set a flag to control the listener thread
+            global listener_running
+            listener_running = True
+            
+            while listener_running:
+                try:
+                    server_socket.settimeout(0.5)
+                    data, address = server_socket.recvfrom(1024)
+                    message = data.decode('utf-8')
+                    logging.info(f"Received message: {message} from {address}")
+                    
+                    action_window.after(0, lambda msg=message: process_signal(msg))
+                    
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    logging.error(f"Error receiving data: {e}")
+                    if not listener_running:
+                        break
                         
-                        # Pass the message to the process_signal function
-                        process_signal(message)
-                    except Exception as e:
-                        print(f"Error receiving data: {e}")
-            except Exception as e:
-                print(f"Socket binding error: {e}")
+        except Exception as e:
+            logging.error(f"Error in signal listener: {e}")
+        finally:
+            server_socket.close()
+            logging.info("Signal listener closed")
 
-    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
-    listen_thread.daemon = True
-    listen_thread.start()
-
-    def get_name_from_id(hardware_id):
+    def get_name_from_id(hardware_id, player_teams):
         for team in ["Red", "Green"]:
             for name, h_id, _ in player_teams[team]:
                 if h_id == hardware_id:
                     return name
         return "Unknown"
+    
+    # Start the listener in a separate thread
+    global listener_running
+    listener_running = True
+    listener_thread = threading.Thread(target=listen_for_signal, args=(process_signal,), daemon=True)
+    listener_thread.start()
+    
+    # Clean up resources when the window is closed
+    def on_closing():
+        global listener_running
+        listener_running = False
+        action_window.destroy()
+    
+    action_window.protocol("WM_DELETE_WINDOW", on_closing)
     
     action_window.mainloop()
