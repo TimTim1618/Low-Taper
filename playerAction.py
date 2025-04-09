@@ -42,17 +42,35 @@ def countdown_timer(player_teams):
             combined.paste(num_img, position, num_img)
             countdown_images.append(ImageTk.PhotoImage(combined))
 
+    #####################################
+    # commented out until timer set back to 30 seconds
+    # def play_track(track_path):
+    #     pygame.mixer.music.load(track_path)
+    #     pygame.mixer.play()
+    #     print(f"Now playing: {os.path.basename(track_path)}")
+
     def update_countdown(index):
-        if index == -1 and alert_img:
-            countdown_label.config(image=alert_img)
-            countdown_window.after(1000, update_countdown, 0)
-        elif index < len(countdown_images):
-            countdown_label.config(image=countdown_images[index])
-            countdown_window.after(1000, update_countdown, index + 1)
-        else:
-            send_start_signal()
-            countdown_window.destroy()
-            action_log(player_teams)
+         if index == -1 and alert_img:
+             countdown_label.config(image=alert_img)
+             countdown_window.after(1000, update_countdown, 0)
+         elif index == 12:
+             pygame.mixer.init()
+              #play audio for countdown
+             MUSIC_FOLDER = "photon_tracks"
+             sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
+             random.shuffle(sound_files)
+             if sound_files:
+                # play_track(sound_files[0])
+                 print("hello")
+             countdown_label.config(image=countdown_images[index])
+             countdown_window.after(1000, update_countdown, index + 1)
+         elif index < len(countdown_images):
+             countdown_label.config(image=countdown_images[index])
+             countdown_window.after(1000, update_countdown, index + 1)
+         else:
+             countdown_window.destroy() 
+             action_log(player_teams) 
+ 
 
     update_countdown(-1)
     countdown_window.mainloop()
