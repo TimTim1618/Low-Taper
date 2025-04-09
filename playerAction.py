@@ -9,6 +9,9 @@ import random
 import threading
 import socket
 import logging
+import sys
+
+
 
 def player_action_main(previous_window, player_teams):
     previous_window.destroy()
@@ -60,6 +63,7 @@ def countdown_timer(player_teams):
             print(f"Error sending start signal: {e}")
         finally:
             sock.close()
+       
 
     def update_countdown(index):
          if index == -1 and alert_img:

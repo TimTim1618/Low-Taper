@@ -6,6 +6,7 @@ from networkSelector import UdpTransmitter
 import psycopg2
 import threading
 from psycopg2 import sql
+import sys
 
 #---------------------------------------------
 #information for data base
@@ -147,33 +148,7 @@ def playerScreen():
 
     player_teams = {"Red": [], "Green": []}
 
-    #----------------------------------------------
-    # initialize player scores and B status
-    players_scores = {
-        "red1": {"score": 0, "has_B": False},
-        "red2": {"score": 0, "has_B": False},
-        "green1": {"score": 0, "has_B": False},
-        "green2": {"score": 0, "has_B": False}
-    }
-
-
-    def update_score_and_B_status(player_name):
-        # update score and check if player has B status
-        if player_name in players_scores:
-            player_data = players_scores[player_name]
-
-            # update score when base hit
-            player_data["score"] += 100
-
-            # assign B status if not already given
-            if not player_data["has_B"]:
-                player_data["has_B"] = True
-                return f"{player_name}: B"
-            else:
-                return player_name
-        return player_name
-    #----------------------------------------------
-
+ 
 
     def store_info():
         # both teams have 15 players.

@@ -19,3 +19,4 @@ fi
 
 echo "Selected Network: $ip:$port"
 python3 playerScreen.py "$ip" "$port"
+python3 playerAction.py "$ip" "$port"

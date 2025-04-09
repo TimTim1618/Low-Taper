@@ -10,9 +10,9 @@ def main():
     selector.select_network()
     localIP, localPort = selector.get_selected_network()
 
-    # # Default to 127.0.0.1 unless changed by user
-    # if not selector.network_changed_by_user():
-    #     localIP = "127.0.0.1"
+    # Default to 127.0.0.1 unless changed by user
+    if not selector.network_changed_by_user():
+        localIP = "127.0.0.1"
 
     UDPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
