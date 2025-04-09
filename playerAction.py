@@ -170,31 +170,6 @@ def action_log(player_teams):
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-    def listen_for_signal(process_signal):
-        listen_address = ("127.0.0.1", 7501)
-        
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            try:
-                sock.bind(listen_address)
-                print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
-                
-                while True:
-                    try:
-                        data, addr = sock.recvfrom(1024)
-                        message = data.decode('utf-8')
-                        print(f"Received: {message} from {addr}")
-                        
-                        # Pass the message to the process_signal function
-                        process_signal(message)
-                    except Exception as e:
-                        print(f"Error receiving data: {e}")
-            except Exception as e:
-                print(f"Socket binding error: {e}")
-
-    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
-    listen_thread.daemon = True
-    listen_thread.start()
-
     def process_signal(message):
         print("Signal received:", message)
         try:
@@ -238,6 +213,32 @@ def action_log(player_teams):
         except Exception as e:
             action_log_text.insert(tk.END, f"Error processing signal: {e}\n")
             action_log_text.see(tk.END)
+
+    
+    def listen_for_signal(process_signal):
+        listen_address = ("127.0.0.1", 7501)
+        
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            try:
+                sock.bind(listen_address)
+                print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
+                
+                while True:
+                    try:
+                        data, addr = sock.recvfrom(1024)
+                        message = data.decode('utf-8')
+                        print(f"Received: {message} from {addr}")
+                        
+                        # Pass the message to the process_signal function
+                        process_signal(message)
+                    except Exception as e:
+                        print(f"Error receiving data: {e}")
+            except Exception as e:
+                print(f"Socket binding error: {e}")
+
+    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
+    listen_thread.daemon = True
+    listen_thread.start()
 
     def get_name_from_id(hardware_id):
         for team in ["Red", "Green"]:
