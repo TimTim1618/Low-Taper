@@ -54,12 +54,12 @@ class UdpTransmitter:
      def send_message(self, message, receive_response=True):
          bytes_to_send = message.encode()
          udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-         try:
-             udp_socket.bind(("", self.client_port))
-         except socket.error as e:
-             print("Error binding to client port:", e)
-             udp_socket.close()
-             return None
+        #  try:
+        #      udp_socket.bind(("", self.client_port))
+        #  except socket.error as e:
+        #      print("Error binding to client port:", e)
+        #      udp_socket.close()
+        #      return None
          
          try:
              udp_socket.sendto(bytes_to_send, (self.ip, self.port))

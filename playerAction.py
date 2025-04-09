@@ -9,6 +9,7 @@ import time
 import random
 import threading
 import socket
+import logging
 
 def player_action_main(previous_window, player_teams):
     previous_window.destroy()
@@ -66,6 +67,27 @@ def send_start_signal():
         except Exception as e:
             print("Error sending start signal:", e)
 
+def listen_for_signal(process_signal):
+    listen_address = ("127.0.0.1", 7501)
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        try:
+            sock.bind(listen_address)
+            print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
+            
+            while True:
+                try:
+                    data, addr = sock.recvfrom(1024)
+                    message = data.decode('utf-8')
+                    print(f"Received: {message} from {addr}")
+                    
+                    # Pass the message to the process_signal function
+                    process_signal(message)
+                except Exception as e:
+                    print(f"Error receiving data: {e}")
+        except Exception as e:
+            print(f"Socket binding error: {e}")
+
 def action_log(player_teams):
     action_window = tk.Tk()
     action_window.title("Player Action")
@@ -113,12 +135,12 @@ def action_log(player_teams):
     action_log_frame = tk.Frame(middle_frame, bg="black")
     action_log_frame.pack(fill="both", expand=True)
 
-    action_log = tk.Text(action_log_frame, height=10, bg="blue", fg="white", font=("Arial", 12, "italic"), wrap="word")
-    action_log.pack(side="left", fill="both", expand=True)
+    action_log_text = tk.Text(action_log_frame, height=10, bg="blue", fg="white", font=("Arial", 12, "italic"), wrap="word")
+    action_log_text.pack(side="left", fill="both", expand=True)
 
-    scrollbar = tk.Scrollbar(action_log_frame, command=action_log.yview)
+    scrollbar = tk.Scrollbar(action_log_frame, command=action_log_text.yview)
     scrollbar.pack(side="right", fill="y")
-    action_log.config(yscrollcommand=scrollbar.set)
+    action_log_text.config(yscrollcommand=scrollbar.set)
 
     bottom_frame = tk.Frame(action_window, bg='black')
     bottom_frame.pack(fill="x", padx=10, pady=5)
@@ -143,41 +165,51 @@ def action_log(player_teams):
 
     action_window.bind("<F1>", on_f1)
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
     def process_signal(message):
         print("Signal received:", message)
         try:
-            hardware_id, base_code = message.strip().split(":")
-        except ValueError:
-            action_log.insert(tk.END, f"Malformed signal: {message}\n")
-            return
+            if ":" in message:
+                parts = message.strip().split(":")
+                if len(parts) == 2:
+                    hardware_id, base_code = parts
+                    
+                    if base_code in ("53", "43"):  # base hit
+                        team_hit = "Red" if base_code == "53" else "Green"
+                        team_awarded = "Green" if team_hit == "Red" else "Red"
+                        action_log_text.insert(tk.END, f"{team_hit} base has been hit by {hardware_id}\n")
+                        action_log_text.see(tk.END)
+                        
+                        for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
+                            key = f"{team_awarded.lower()}_player{i}_score"
+                            player_scores[key] += 100
+                            player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+                    else:  # player vs player hit
+                        player1_id, player2_id = parts
+                        if player1_id != player2_id:
+                            key1 = hardware_to_key.get(player1_id)
+                            key2 = hardware_to_key.get(player2_id)
 
-        if base_code in ("53", "43"):  # base hit
-            team_hit = "Red" if base_code == "53" else "Green"
-            team_awarded = "Green" if team_hit == "Red" else "Red"
-            action_log.insert(tk.END, f"{team_hit} base has been hit by {hardware_id}\n")
-            for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
-                key = f"{team_awarded.lower()}_player{i}_score"
-                player_scores[key] += 100
-                player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
-        else:  # player vs player
-            try:
-                player1_id, player2_id = message.strip().split(":")
-            except ValueError:
-                action_log.insert(tk.END, f"Invalid player hit signal: {message}\n")
-                return
-
-            if player1_id != player2_id:
-                key1 = hardware_to_key.get(player1_id)
-                key2 = hardware_to_key.get(player2_id)
-
-                if key1 and key2:
-                    player_scores[key1] += 10
-                    player_scores[key2] += 10
-                    player_labels[key1].config(text=f"{get_name_from_id(player1_id)} - Score: {player_scores[key1]}")
-                    player_labels[key2].config(text=f"{get_name_from_id(player2_id)} - Score: {player_scores[key2]}")
-                    action_log.insert(tk.END, f"{get_name_from_id(player1_id)} hit {get_name_from_id(player2_id)}. +10 each\n")
+                            if key1 and key2:
+                                player_scores[key1] += 10
+                                player_scores[key2] += 10
+                                player_labels[key1].config(text=f"{get_name_from_id(player1_id)} - Score: {player_scores[key1]}")
+                                player_labels[key2].config(text=f"{get_name_from_id(player2_id)} - Score: {player_scores[key2]}")
+                                action_log_text.insert(tk.END, f"{get_name_from_id(player1_id)} hit {get_name_from_id(player2_id)}. +10 each\n")
+                                action_log_text.see(tk.END)
+                            else:
+                                action_log_text.insert(tk.END, f"Unknown players: {player1_id}, {player2_id}\n")
+                                action_log_text.see(tk.END)
                 else:
-                    action_log.insert(tk.END, f"Unknown players: {player1_id}, {player2_id}\n")
+                    action_log_text.insert(tk.END, f"Invalid message format: {message}\n")
+                    action_log_text.see(tk.END)
+            else:
+                action_log_text.insert(tk.END, f"Malformed signal: {message}\n")
+                action_log_text.see(tk.END)
+        except Exception as e:
+            action_log_text.insert(tk.END, f"Error processing signal: {e}\n")
+            action_log_text.see(tk.END)
 
     def get_name_from_id(hardware_id):
         for team in ["Red", "Green"]:
@@ -185,14 +217,9 @@ def action_log(player_teams):
                 if h_id == hardware_id:
                     return name
         return "Unknown"
-
-    def listen_for_signal():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        while True:
-            data, _ = sock.recvfrom(1024)
-            message = data.decode()
-            action_window.after(0, process_signal, message)
-
-    threading.Thread(target=listen_for_signal, daemon=True).start()
-
+    
+    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
+    listen_thread.daemon = True  # Make thread exit when main program exits
+    listen_thread.start()
+    
     action_window.mainloop()
