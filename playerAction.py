@@ -5,7 +5,6 @@ from tkinter import Label
 from PIL import Image, ImageTk
 import pygame
 import os
-import time
 import random
 import threading
 import socket
@@ -47,7 +46,20 @@ def countdown_timer(player_teams):
     # def play_track(track_path):
     #     pygame.mixer.music.load(track_path)
     #     pygame.mixer.play()
-    #     print(f"Now playing: {os.path.basename(track_path)}")
+    #     print(f"Now playing: {os.path.basename(track_path)}")\
+
+    def send_start_signal():
+        import socket
+        signal_message = "202"
+        target_address = ("127.0.0.1", 7500) # traffic generator receiving address
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(signal_message.encode(), target_address)
+            print("Start signal '202' sent to traffic generator.")
+        except Exception as e:
+            print(f"Error sending start signal: {e}")
+        finally:
+            sock.close()
 
     def update_countdown(index):
          if index == -1 and alert_img:
@@ -60,6 +72,7 @@ def countdown_timer(player_teams):
              sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
              random.shuffle(sound_files)
              if sound_files:
+            # commented out for now with hello statement
                 # play_track(sound_files[0])
                  print("hello")
              countdown_label.config(image=countdown_images[index])
@@ -68,43 +81,15 @@ def countdown_timer(player_teams):
              countdown_label.config(image=countdown_images[index])
              countdown_window.after(1000, update_countdown, index + 1)
          else:
-             countdown_window.destroy() 
+             # send "202" start signal to traffic generator
+             send_start_signal()
+             countdown_window.destroy()
              action_log(player_teams) 
  
 
     update_countdown(-1)
     countdown_window.mainloop()
 
-def send_start_signal():
-    signal_message = "202"
-    target_address = ("127.0.0.1", 7500)
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        try:
-            sock.sendto(signal_message.encode(), target_address)
-            print("Start signal '202' sent to traffic generator.")
-        except Exception as e:
-            print("Error sending start signal:", e)
-
-def listen_for_signal(process_signal):
-    listen_address = ("127.0.0.1", 7501)
-    
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        try:
-            sock.bind(listen_address)
-            print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
-            
-            while True:
-                try:
-                    data, addr = sock.recvfrom(1024)
-                    message = data.decode('utf-8')
-                    print(f"Received: {message} from {addr}")
-                    
-                    # Pass the message to the process_signal function
-                    process_signal(message)
-                except Exception as e:
-                    print(f"Error receiving data: {e}")
-        except Exception as e:
-            print(f"Socket binding error: {e}")
 
 def action_log(player_teams):
     action_window = tk.Tk()
@@ -185,6 +170,31 @@ def action_log(player_teams):
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+    def listen_for_signal(process_signal):
+        listen_address = ("127.0.0.1", 7501)
+        
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            try:
+                sock.bind(listen_address)
+                print(f"Listening for signals on {listen_address[0]}:{listen_address[1]}")
+                
+                while True:
+                    try:
+                        data, addr = sock.recvfrom(1024)
+                        message = data.decode('utf-8')
+                        print(f"Received: {message} from {addr}")
+                        
+                        # Pass the message to the process_signal function
+                        process_signal(message)
+                    except Exception as e:
+                        print(f"Error receiving data: {e}")
+            except Exception as e:
+                print(f"Socket binding error: {e}")
+
+    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
+    listen_thread.daemon = True
+    listen_thread.start()
+
     def process_signal(message):
         print("Signal received:", message)
         try:
@@ -235,9 +245,5 @@ def action_log(player_teams):
                 if h_id == hardware_id:
                     return name
         return "Unknown"
-    
-    listen_thread = threading.Thread(target=listen_for_signal, args=(process_signal,))
-    listen_thread.daemon = True  # Make thread exit when main program exits
-    listen_thread.start()
     
     action_window.mainloop()
