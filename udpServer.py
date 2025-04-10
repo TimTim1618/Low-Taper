@@ -27,6 +27,7 @@ def main():
     bufferSize = 1024
     UDPServerSocket.settimeout(2)  # Prevents blocking indefinitely
 
+
     try:
         while True:
             try:
