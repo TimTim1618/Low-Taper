@@ -155,6 +155,23 @@ def action_log(player_teams):
     timer_label = tk.Label(bottom_frame, text="Time Remaining: 6:00", font=("Arial", 16, "bold"), fg="white", bg="black")
     timer_label.pack()
 
+
+# def send_end_signal():
+#     def send_once(i):
+#         signal_message = "201"
+#         target_address = ("127.0.0.1", 7500)
+#         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         try:
+#             sock.sendto(signal_message.encode(), target_address)
+#             print(f"Sent end signal '201' ({i+1}/3)")
+#         except Exception as e:
+#             print(f"Error sending end signal: {e}")
+#         finally:
+#             sock.close()
+
+#     for i in range(3):
+#         action_window.after(i * 200, lambda i=i: send_once(i))
+
     def update_timer(time_left):
         if time_left >= 0:
             minutes = time_left // 60
@@ -163,6 +180,10 @@ def action_log(player_teams):
             action_window.after(1000, update_timer, time_left - 1)
         else:
             timer_label.config(text="Times up!")
+#else:
+#        timer_label.config(text="Time's up!")
+#        send_end_signal()
+#        action_window.after(1000, lambda: on_f1(None))
 
     update_timer(360)
 
