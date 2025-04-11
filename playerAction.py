@@ -169,8 +169,8 @@ def action_log(player_teams):
     def get_name_from_id(hardware_id, player_teams):
             for team in ["Red", "Green"]:
                 for name, h_id, _ in player_teams[team]:
-                   # print(f"Comparing incoming '{hardware_id}' to store '{h_id}'")
-                    if h_id == hardware_id:
+                    print(f"Comparing: {str(hardware_id)} == {str(h_id)}")
+                    if str(h_id) == str(hardware_id):
                         return name
             return "Unknown"
 #--------------------------------------------------------------------------------------------#
