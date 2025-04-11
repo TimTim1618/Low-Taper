@@ -169,7 +169,7 @@ def action_log(player_teams):
     def get_name_from_id(hardware_id, player_teams):
             for team in ["Red", "Green"]:
                 for name, h_id, _ in player_teams[team]:
-                    print(f"Comparing: {str(hardware_id)} == {str(h_id)}")
+                   # print(f"Comparing: {str(hardware_id)} == {str(h_id)}")
                     if str(h_id) == str(hardware_id):
                         return name
             return "Unknown"
@@ -231,15 +231,17 @@ def action_log(player_teams):
                         action_log_text.see(tk.END)
 
                         for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
-                            key = f"{team_awarded.lower()}_player{i}_score"
-                            player_scores[key] += 100
-                            player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+                            if str(h_id) == str(id1):
+                                key = f"{team_awarded.lower()}_player{i}_score"
+                                player_scores[key] += 100
+                                player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+                                break
 
                     # Player hit logic
                     else:
                         shooter_name = get_name_from_id(id1, player_teams)
                         target_name = get_name_from_id(id2, player_teams)
-                        action_log_text.insert(tk.END, f"{shooter_name} hit {target_name}\n")
+                        action_log_text.insert(tk.END, f"{shooter_name} HAS BLASTED THEIR GOONER GUN AT {target_name}\n")
                         action_log_text.see(tk.END)
 
                         # Optional: reward shooter
