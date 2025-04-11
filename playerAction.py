@@ -234,6 +234,9 @@ def action_log(player_teams):
                             if str(h_id) == str(id1):
                                 key = f"{team_awarded.lower()}_player{i}_score"
                                 player_scores[key] += 100
+                                # add B next to name
+                                 
+
                                 player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
                                 break
 
@@ -241,7 +244,7 @@ def action_log(player_teams):
                     else:
                         shooter_name = get_name_from_id(id1, player_teams)
                         target_name = get_name_from_id(id2, player_teams)
-                        action_log_text.insert(tk.END, f"{shooter_name} HAS BLASTED THEIR GOONER GUN AT {target_name}\n")
+                        action_log_text.insert(tk.END, f"{shooter_name} HAS BLASTED {target_name} WITH THEIR PHOTON BLASTER\n")
                         action_log_text.see(tk.END)
 
                         # Optional: reward shooter
