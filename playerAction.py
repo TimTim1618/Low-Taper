@@ -196,6 +196,7 @@ def action_log(player_teams):
             sock.close()
 
             #after 6 minutes do this function
+            #implement this later
 
           # def send_end_signal():
     #     def send_once(i):
@@ -212,23 +213,6 @@ def action_log(player_teams):
 
     #     for i in range(3):
     #         action_window.after(i * 200, lambda i=i: send_once(i))
-
-        # Listen for a response from the traffic generator
-        try:
-            listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            listener.bind(("127.0.0.1", listen_port))
-            listener.settimeout(5)  # Wait up to 5 seconds for a reply
-
-            print(f"Listening for response on 127.0.0.1:{listen_port}...")
-            response_data, sender = listener.recvfrom(1024)
-            print(f"Received from traffic generator: {response_data.decode()}")
-
-        except socket.timeout:
-            print("No response received after sending start signal.")
-        except Exception as e:
-            print(f"Error while receiving response: {e}")
-        finally:
-            listener.close()
 
     def process_signal(message):
         print("Signal received:", message)
@@ -264,7 +248,7 @@ def action_log(player_teams):
                             for i, (name, h_id, _) in enumerate(player_teams[team], start=1):
                                 if str(h_id) == str(id1):
                                     key = f"{team.lower()}_player{i}_score"
-                                    player_scores[key] += 50
+                                    player_scores[key] += 10
                                     player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
         except Exception as e:
             print("Error processing signal:", e)
