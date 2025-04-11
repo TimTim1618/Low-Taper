@@ -173,7 +173,6 @@ def action_log(player_teams):
                     if h_id == hardware_id:
                         return name
             return "Unknown"
-
 #--------------------------------------------------------------------------------------------#
                     # connections #
 
@@ -264,7 +263,7 @@ def action_log(player_teams):
                             for i, (name, h_id, _) in enumerate(player_teams[team], start=1):
                                 if str(h_id) == str(id1):
                                     key = f"{team.lower()}_player{i}_score"
-                                    player_scores[key] += 50
+                                    player_scores[key] += 10
                                     player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
         except Exception as e:
             print("Error processing signal:", e)
