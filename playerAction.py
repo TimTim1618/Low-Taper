@@ -102,6 +102,7 @@ def action_log(player_teams):
     player_scores = {}
     player_labels = {}
     hardware_to_key = {}
+    has_b = {}
 
     for index, (name, hardware_id, _) in enumerate(player_teams["Red"], start=1):
         key = f"red_player{index}_score"
@@ -236,8 +237,13 @@ def action_log(player_teams):
                                 player_scores[key] += 100
                                 # add B next to name
                                  
+                                if str(h_id) not in has_b:
+                                    has_b[str(h_id)] = True
+                                    display_name = f"{name} 🅱"
+                                else:
+                                    display_name = name if name.endswith( " 🅱") else f"{name} 🅱" 
 
-                                player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+                                player_labels[key].config(text=f"{display_name} - Score: {player_scores[key]}")
                                 break
 
                     # Player hit logic
@@ -247,13 +253,18 @@ def action_log(player_teams):
                         action_log_text.insert(tk.END, f"{shooter_name} HAS BLASTED {target_name} WITH THEIR PHOTON BLASTER\n")
                         action_log_text.see(tk.END)
 
-                        # Optional: reward shooter
+                        #reward shooter
                         for team in ["Red", "Green"]:
                             for i, (name, h_id, _) in enumerate(player_teams[team], start=1):
                                 if str(h_id) == str(id1):
                                     key = f"{team.lower()}_player{i}_score"
                                     player_scores[key] += 10
-                                    player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
+                                    # preserve B if its already been awarded
+                                    if has_b.get(str(id1)):
+                                        display_name = f"{name } 🅱"
+                                    else:
+                                        display_name = name
+                                    player_labels[key].config(text=f"{display_name} - Score: {player_scores[key]}")
         except Exception as e:
             print("Error processing signal:", e)
 
