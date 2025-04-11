@@ -173,7 +173,6 @@ def action_log(player_teams):
                     if h_id == hardware_id:
                         return name
             return "Unknown"
-
 #--------------------------------------------------------------------------------------------#
                     # connections #
 
