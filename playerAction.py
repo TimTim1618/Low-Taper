@@ -51,24 +51,6 @@ def countdown_timer(player_teams):
     #     pygame.mixer.play()
     #     print(f"Now playing: {os.path.basename(track_path)}")\
 
-    
-
-   # def send_end_signal():
-#     def send_once(i):
-#         signal_message = "201"
-#         target_address = ("127.0.0.1", 7500)
-#         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         try:
-#             sock.sendto(signal_message.encode(), target_address)
-#             print(f"Sent end signal '201' ({i+1}/3)")
-#         except Exception as e:
-#             print(f"Error sending end signal: {e}")
-#         finally:
-#             sock.close()
-
-#     for i in range(3):
-#         action_window.after(i * 200, lambda i=i: send_once(i))
-
        
 
     def update_countdown(index):
@@ -158,7 +140,6 @@ def action_log(player_teams):
     timer_label = tk.Label(bottom_frame, text="Time Remaining: 6:00", font=("Arial", 16, "bold"), fg="white", bg="black")
     timer_label.pack()
 
-
 # 
     def update_timer(time_left):
         if time_left >= 0:
@@ -168,7 +149,7 @@ def action_log(player_teams):
             action_window.after(1000, update_timer, time_left - 1)
         else:
             timer_label.config(text="Times up!")
-        #   send_end_signal()
+           # send_end_signal()
 
     update_timer(360)
 
@@ -183,9 +164,12 @@ def action_log(player_teams):
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+#--------------------------------------------------------------------------------------------#
+
     def get_name_from_id(hardware_id, player_teams):
             for team in ["Red", "Green"]:
                 for name, h_id, _ in player_teams[team]:
+                   # print(f"Comparing incoming '{hardware_id}' to store '{h_id}'")
                     if h_id == hardware_id:
                         return name
             return "Unknown"
@@ -211,6 +195,24 @@ def action_log(player_teams):
         finally:
             sock.close()
 
+            #after 6 minutes do this function
+
+          # def send_end_signal():
+    #     def send_once(i):
+    #         signal_message = "201"
+    #         target_address = ("127.0.0.1", 7500)
+    #         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #         try:
+    #             sock.sendto(signal_message.encode(), target_address)
+    #             print(f"Sent end signal '201' ({i+1}/3)")
+    #         except Exception as e:
+    #             print(f"Error sending end signal: {e}")
+    #         finally:
+    #             sock.close()
+
+    #     for i in range(3):
+    #         action_window.after(i * 200, lambda i=i: send_once(i))
+
         # Listen for a response from the traffic generator
         try:
             listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -234,43 +236,39 @@ def action_log(player_teams):
             if ":" in message:
                 parts = message.strip().split(":")
                 if len(parts) == 2:
-                    hardware_id, base_code = parts
+                    id1, id2 = parts
 
-                    if base_code in ("53", "43"):
-                        team_hit = "Red" if base_code == "53" else "Green"
+                    # Base hit logic
+                    if id2 in ("53", "43"):
+                        team_hit = "Red" if id2 == "53" else "Green"
                         team_awarded = "Green" if team_hit == "Red" else "Red"
-                        action_log_text.insert(tk.END, f"{team_hit} base has been hit by {hardware_id}\n")
+                        hitter_name = get_name_from_id(id1, player_teams)
+
+                        action_log_text.insert(tk.END, f"{team_hit} base has been hit by {hitter_name}\n")
                         action_log_text.see(tk.END)
 
                         for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
                             key = f"{team_awarded.lower()}_player{i}_score"
                             player_scores[key] += 100
                             player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
-                    else:
-                        player1_id, player2_id = parts
-                        if player1_id != player2_id:
-                            key1 = hardware_to_key.get(player1_id)
-                            key2 = hardware_to_key.get(player2_id)
 
-                            if key1 and key2:
-                                player_scores[key1] += 10
-                                player_scores[key2] += 10
-                                player_labels[key1].config(text=f"{get_name_from_id(player1_id, player_teams)} - Score: {player_scores[key1]}")
-                                player_labels[key2].config(text=f"{get_name_from_id(player2_id, player_teams)} - Score: {player_scores[key2]}")
-                                action_log_text.insert(tk.END, f"{get_name_from_id(player1_id, player_teams)} hit {get_name_from_id(player2_id, player_teams)}. +10 each\n")
-                                action_log_text.see(tk.END)
-                            else:
-                                action_log_text.insert(tk.END, f"Unknown players: {player1_id}, {player2_id}\n")
-                                action_log_text.see(tk.END)
-                else:
-                    action_log_text.insert(tk.END, f"Invalid message format: {message}\n")
-                    action_log_text.see(tk.END)
-            else:
-                action_log_text.insert(tk.END, f"Malformed signal: {message}\n")
-                action_log_text.see(tk.END)
+                    # Player hit logic
+                    else:
+                        shooter_name = get_name_from_id(id1, player_teams)
+                        target_name = get_name_from_id(id2, player_teams)
+                        action_log_text.insert(tk.END, f"{shooter_name} hit {target_name}\n")
+                        action_log_text.see(tk.END)
+
+                        # Optional: reward shooter
+                        for team in ["Red", "Green"]:
+                            for i, (name, h_id, _) in enumerate(player_teams[team], start=1):
+                                if str(h_id) == str(id1):
+                                    key = f"{team.lower()}_player{i}_score"
+                                    player_scores[key] += 50
+                                    player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
         except Exception as e:
-            action_log_text.insert(tk.END, f"Error processing signal: {e}\n")
-            action_log_text.see(tk.END)
+            print("Error processing signal:", e)
+
 
     def listen_for_signal(process_signal):
         import socket
@@ -326,6 +324,8 @@ def action_log(player_teams):
             logging.info("Server shutting down.")
         finally:
             UDPServerSocket.close()
+
+#--------------------------------------------------------------------------------#
 
     global listener_running
     listener_running = False

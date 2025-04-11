@@ -199,7 +199,7 @@ def playerScreen():
 
 
         # Update player team
-        player_teams[team].append((player_name, user_id, hardware_id))
+        player_teams[team].append((player_name, hardware_id, user_id))
 
 
         # Update UI
