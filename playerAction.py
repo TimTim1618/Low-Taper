@@ -51,18 +51,7 @@ def countdown_timer(player_teams):
     #     pygame.mixer.play()
     #     print(f"Now playing: {os.path.basename(track_path)}")\
 
-    def send_start_signal():
-        import socket
-        signal_message = "202"
-        target_address = ("127.0.0.1", 7500) # traffic generator receiving address
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            sock.sendto(signal_message.encode(), target_address)
-            print("Start signal '202' sent to traffic generator.")
-        except Exception as e:
-            print(f"Error sending start signal: {e}")
-        finally:
-            sock.close()
+    
 
    # def send_end_signal():
 #     def send_once(i):
@@ -103,7 +92,6 @@ def countdown_timer(player_teams):
              countdown_window.after(1000, update_countdown, index + 1)
          else:
              # send "202" start signal to traffic generator
-             send_start_signal()
              countdown_window.destroy()
              action_log(player_teams) 
  
@@ -117,8 +105,6 @@ def action_log(player_teams):
     action_window.title("Player Action")
     action_window.geometry("800x600")
     action_window.configure(bg="black")
-
-    transmitter = UdpTransmitter()
 
     top_frame = tk.Frame(action_window, bg='black')
     top_frame.pack(fill="x", padx=10, pady=5)
@@ -197,6 +183,51 @@ def action_log(player_teams):
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+    def get_name_from_id(hardware_id, player_teams):
+            for team in ["Red", "Green"]:
+                for name, h_id, _ in player_teams[team]:
+                    if h_id == hardware_id:
+                        return name
+            return "Unknown"
+
+#--------------------------------------------------------------------------------------------#
+                    # connections #
+
+    def send_start_signal():
+        import socket
+        import time
+
+        signal_message = "202"
+        target_address = ("127.0.0.1", 7500)  # traffic generator receiving address
+        listen_port = 7501                   # Port we will listen on after sending
+
+        # Send signal
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(signal_message.encode(), target_address)
+            print("Start signal '202' sent to traffic generator.")
+        except Exception as e:
+            print(f"Error sending start signal: {e}")
+        finally:
+            sock.close()
+
+        # Listen for a response from the traffic generator
+        try:
+            listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            listener.bind(("127.0.0.1", listen_port))
+            listener.settimeout(5)  # Wait up to 5 seconds for a reply
+
+            print(f"Listening for response on 127.0.0.1:{listen_port}...")
+            response_data, sender = listener.recvfrom(1024)
+            print(f"Received from traffic generator: {response_data.decode()}")
+
+        except socket.timeout:
+            print("No response received after sending start signal.")
+        except Exception as e:
+            print(f"Error while receiving response: {e}")
+        finally:
+            listener.close()
+
     def process_signal(message):
         print("Signal received:", message)
         try:
@@ -204,18 +235,18 @@ def action_log(player_teams):
                 parts = message.strip().split(":")
                 if len(parts) == 2:
                     hardware_id, base_code = parts
-                    
-                    if base_code in ("53", "43"):  # base hit
+
+                    if base_code in ("53", "43"):
                         team_hit = "Red" if base_code == "53" else "Green"
                         team_awarded = "Green" if team_hit == "Red" else "Red"
                         action_log_text.insert(tk.END, f"{team_hit} base has been hit by {hardware_id}\n")
                         action_log_text.see(tk.END)
-                        
+
                         for i, (name, h_id, _) in enumerate(player_teams[team_awarded], start=1):
                             key = f"{team_awarded.lower()}_player{i}_score"
                             player_scores[key] += 100
                             player_labels[key].config(text=f"{name} - Score: {player_scores[key]}")
-                    else:  # player vs player hit
+                    else:
                         player1_id, player2_id = parts
                         if player1_id != player2_id:
                             key1 = hardware_to_key.get(player1_id)
@@ -242,58 +273,74 @@ def action_log(player_teams):
             action_log_text.see(tk.END)
 
     def listen_for_signal(process_signal):
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        server_address = ('127.0.0.1', 7501)  # Traffic generator sending address
+        import socket
+        import logging
+      
+        localIP = "127.0.0.1"
+        localPort = 7501
+
+        logging.info(f"Starting UDP listener on {localIP}:{localPort}")
+        UDPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         
         try:
-            server_socket.bind(server_address)
-            logging.info(f"Listening for signals on {server_address}")
-            
-            # Set a flag to control the listener thread
-            global listener_running
-            listener_running = True
-            
-            while listener_running:
-                try:
-                    server_socket.settimeout(0.5)
-                    data, address = server_socket.recvfrom(1024)
-                    message = data.decode('utf-8')
-                    logging.info(f"Received message: {message} from {address}")
-                    
-                    action_window.after(0, lambda msg=message: process_signal(msg))
-                    
-                except socket.timeout:
-                    continue
-                except Exception as e:
-                    logging.error(f"Error receiving data: {e}")
-                    if not listener_running:
-                        break
-                        
-        except Exception as e:
-            logging.error(f"Error in signal listener: {e}")
-        finally:
-            server_socket.close()
-            logging.info("Signal listener closed")
+            UDPServerSocket.bind((localIP, localPort))
+            logging.info("Start UDP listener thread...")
+        except socket.error as e:
+            logging.error(f"Error binding server socket to {localIP}:{localPort}: {e}")
+            return
 
-    def get_name_from_id(hardware_id, player_teams):
-        for team in ["Red", "Green"]:
-            for name, h_id, _ in player_teams[team]:
-                if h_id == hardware_id:
-                    return name
-        return "Unknown"
-    
-    # Start the listener in a separate thread
+        logging.info(f"UDP server up and listening on {localIP}:{localPort}")
+
+        bufferSize = 1024
+        UDPServerSocket.settimeout(2)  # Prevents blocking indefinitely
+
+
+        try:
+            while True:
+                try:
+                    bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+                    message = bytesAddressPair[0].decode()
+                    address = bytesAddressPair[1]
+
+                    logging.info(f"Message from Client: {message}")
+                    logging.info(f"Client IP Address: {address}")
+
+                    process_signal(message)
+
+                    # Define the response before sending it
+                    response_message = f"Received: {message}"
+
+                    #send a reply back to server
+                    reply_ip = address[0]
+                    reply_port = 7500
+                    UDPServerSocket.sendto(response_message.encode(), (reply_ip, reply_port))
+                    logging.info(f"Sending response to {reply_ip}:{reply_port}")
+
+                except socket.timeout:
+                    pass  # Prevents freezing when there's no incoming message
+
+                except socket.error as e:
+                    logging.warning(f"Error receiving data: {e}")
+
+        except KeyboardInterrupt:
+            logging.info("Server shutting down.")
+        finally:
+            UDPServerSocket.close()
+
     global listener_running
-    listener_running = True
-    listener_thread = threading.Thread(target=listen_for_signal, args=(process_signal,), daemon=True)
+    listener_running = False
+    listener_thread = threading.Thread(target=send_start_signal, daemon=True)
     listener_thread.start()
-    
-    # Clean up resources when the window is closed
+
+    listener_thread_2 = threading.Thread(target=listen_for_signal, args=(process_signal,), daemon=True)
+    listener_thread_2.start()
+
+
     def on_closing():
         global listener_running
         listener_running = False
         action_window.destroy()
-    
+
     action_window.protocol("WM_DELETE_WINDOW", on_closing)
-    
+
     action_window.mainloop()
