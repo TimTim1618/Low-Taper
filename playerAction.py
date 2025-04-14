@@ -194,27 +194,6 @@ def action_log(player_teams):
             return "Unknown"
 #--------------------------------------------------------------------------------------------#
                     # connections #
-
-    def send_start_signal():
-        import socket
-        import time
-
-        signal_message = "202"
-        target_address = ("127.0.0.1", 7500)  # traffic generator receiving address
-
-        # Send signal
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            sock.sendto(signal_message.encode(), target_address)
-            print("Start signal '202' sent to traffic generator.")
-        except Exception as e:
-            print(f"Error sending start signal: {e}")
-        finally:
-            sock.close()
-
-            #after 6 minutes do this function
-            #implement this later
-
     
     def process_signal(message):
         print("Signal received:", message)
@@ -326,15 +305,40 @@ def action_log(player_teams):
         finally:
             UDPServerSocket.close()
 
+
+
+
+    def send_start_signal():
+        import socket
+        import time
+
+        signal_message = "202"
+        target_address = ("127.0.0.1", 7500)  # traffic generator receiving address
+
+        # Send signal
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(signal_message.encode(), target_address)
+            print("Start signal '202' sent to traffic generator.")
+        except Exception as e:
+            print(f"Error sending start signal: {e}")
+        finally:
+            sock.close()
+
+            #after 6 minutes do this function
+            #implement this later
+
 #--------------------------------------------------------------------------------#
 
     global listener_running
     listener_running = False
+    listener_thread_2 = threading.Thread(target=listen_for_signal, args=(process_signal,), daemon=True)
+    listener_thread_2.start()
+
     listener_thread = threading.Thread(target=send_start_signal, daemon=True)
     listener_thread.start()
 
-    listener_thread_2 = threading.Thread(target=listen_for_signal, args=(process_signal,), daemon=True)
-    listener_thread_2.start()
+   
 
 
     def on_closing():

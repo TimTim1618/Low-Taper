@@ -1,18 +1,17 @@
-from networkSelector import NetworkSelector, UdpTransmitter
+import socket
 
-def main():
-    # Select the network 
-    selector = NetworkSelector()
-    selector.select_network()
-    server_ip, server_port = selector.get_selected_network()
+msgFromClient       = "Hello UDP Server"
+bytesToSend         = str.encode(msgFromClient)
+serverAddressPort   = ("127.0.0.1", 7501)
+bufferSize          = 1024
 
-    # Create the transmitter.
-    # client_port is set to 7501 
-    transmitter = UdpTransmitter(ip=server_ip, port=server_port, client_port=7500)
-    
-    # Send the message to the server.
-    if response:
-        print("Message from Server:", response)
+# Create a UDP socket at client side
+UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
-if __name__ == "__main__":
-    main()
+# Send to server using created UDP socket
+UDPClientSocket.sendto(bytesToSend, serverAddressPort)
+
+msgFromServer = UDPClientSocket.recvfrom(bufferSize)
+msg = "Message from Server {}".format(msgFromServer[0])
+
+print(msg)
