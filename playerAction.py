@@ -35,7 +35,7 @@ def countdown_timer(player_teams):
     alert_img = ImageTk.PhotoImage(alert_img) if alert_img else None
 
     countdown_images = []
-    for i in range(1, -1, -1):
+    for i in range(30, -1, -1):
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA").resize((100, 100))
@@ -47,7 +47,7 @@ def countdown_timer(player_teams):
     
     def play_track(track_path):
         pygame.mixer.music.load(track_path)
-        pygame.mixer.play()
+        pygame.mixer.music.play()
         print(f"Now playing: {os.path.basename(track_path)}")\
 
        
