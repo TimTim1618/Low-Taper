@@ -35,7 +35,7 @@ def countdown_timer(player_teams):
     alert_img = ImageTk.PhotoImage(alert_img) if alert_img else None
 
     countdown_images = []
-    for i in range(30, -1, -1):
+    for i in range(1, -1, -1):
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA").resize((100, 100))
@@ -167,8 +167,43 @@ def action_log(player_teams):
         else:
             timer_label.config(text="Times up!")
             send_end_signal()
+    
+
+    flash_state = {"on": True}
+
+    def flash_leading_team():
+        red_score = sum(
+            player_scores[f"red_player{i+1}_score"]
+            for i in range(len(player_teams["Red"]))
+        )
+        green_score = sum(
+            player_scores[f"green_player{i+1}_score"]
+            for i in range(len(player_teams["Green"]))
+        )
+
+        # Determine who is leading
+        if red_score > green_score:
+            leading = left_team_frame
+            trailing = right_team_frame
+        elif green_score > red_score:
+            leading = right_team_frame
+            trailing = left_team_frame
+        else:
+            leading = trailing = None
+
+        # Toggle border color
+        border_color = "yellow" if flash_state["on"] else "black"
+        flash_state["on"] = not flash_state["on"]
+
+        if leading:
+            leading.config(highlightbackground=border_color, highlightthickness=3)
+        if trailing:
+            trailing.config(highlightbackground="black", highlightthickness=0)
+
+        action_window.after(500, flash_leading_team)  # call again in 0.5s
 
     update_timer(360)
+   
 
     def on_f1(event):
         # Set a flag to stop the listener thread
@@ -190,6 +225,34 @@ def action_log(player_teams):
                     if str(h_id) == str(hardware_id):
                         return name
             return "Unknown"
+    
+    def update_score_display():
+        # For both teams
+        for team in ["Red", "Green"]:
+            # Create a list of (player_name, score, label)
+            entries = []
+            for i, (name, h_id, _) in enumerate(player_teams[team], start=1):
+                key = f"{team.lower()}_player{i}_score"
+                score = player_scores[key]
+                label = player_labels[key]
+                entries.append((name, score, label, key, h_id))
+
+            # Sort by score descending
+            entries.sort(key=lambda x: x[1], reverse=True)
+
+            # Repack sorted labels
+            team_frame = left_team_frame if team == "Red" else right_team_frame
+            for widget in team_frame.winfo_children()[1:]:  # Skip the title label
+                widget.pack_forget()
+            for name, score, label, key, h_id in entries:
+                # Preserve 🅱 if awarded
+                display_name = f"{name} 🅱" if has_b.get(str(h_id)) else name
+                label.config(text=f"{display_name} - Score: {score}")
+                label.pack()
+
+
+    
+
 #--------------------------------------------------------------------------------------------#
                     # connections #
     
@@ -224,7 +287,7 @@ def action_log(player_teams):
 
                                 player_labels[key].config(text=f"{display_name} - Score: {player_scores[key]}")
                                 break
-
+                        update_score_display()           
                     # Player hit logic
                     else:
                         shooter_name = get_name_from_id(id1, player_teams)
@@ -244,6 +307,7 @@ def action_log(player_teams):
                                     else:
                                         display_name = name
                                     player_labels[key].config(text=f"{display_name} - Score: {player_scores[key]}")
+                        update_score_display()
         except Exception as e:
             print("Error processing signal:", e)
 
@@ -327,6 +391,7 @@ def action_log(player_teams):
             #implement this later
 
 #--------------------------------------------------------------------------------#
+    flash_leading_team()
 
     global listener_running
     listener_running = False
