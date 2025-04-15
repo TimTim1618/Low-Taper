@@ -44,12 +44,11 @@ def countdown_timer(player_teams):
             combined.paste(num_img, position, num_img)
             countdown_images.append(ImageTk.PhotoImage(combined))
 
-    #####################################
-    # commented out until timer set back to 30 seconds
-    # def play_track(track_path):
-    #     pygame.mixer.music.load(track_path)
-    #     pygame.mixer.play()
-    #     print(f"Now playing: {os.path.basename(track_path)}")\
+    
+    def play_track(track_path):
+        pygame.mixer.music.load(track_path)
+        pygame.mixer.play()
+        print(f"Now playing: {os.path.basename(track_path)}")\
 
        
 
@@ -64,9 +63,8 @@ def countdown_timer(player_teams):
              sound_files = [os.path.join(MUSIC_FOLDER, f) for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
              random.shuffle(sound_files)
              if sound_files:
-            # commented out for now with hello statement
-                # play_track(sound_files[0])
-                 print("hello")
+                play_track(sound_files[0])
+                
              countdown_label.config(image=countdown_images[index])
              countdown_window.after(1000, update_countdown, index + 1)
          elif index < len(countdown_images):
