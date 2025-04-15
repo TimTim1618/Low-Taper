@@ -35,7 +35,7 @@ def countdown_timer(player_teams):
     alert_img = ImageTk.PhotoImage(alert_img) if alert_img else None
 
     countdown_images = []
-    for i in range(1, -1, -1):
+    for i in range(30, -1, -1):
         num_path = os.path.join(image_folder, f"{i}.tif")
         if background and os.path.exists(num_path):
             num_img = Image.open(num_path).convert("RGBA").resize((100, 100))
@@ -94,8 +94,23 @@ def action_log(player_teams):
     right_team_frame = tk.Frame(top_frame, bg='black')
     right_team_frame.pack(side='right', expand=True)
 
-    tk.Label(left_team_frame, text="RED TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
-    tk.Label(right_team_frame, text="GREEN TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
+    # tk.Label(left_team_frame, text="RED TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
+    # tk.Label(right_team_frame, text="GREEN TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack()
+    # Red team header row
+    red_header = tk.Frame(left_team_frame, bg="black")
+    red_header.pack()
+    tk.Label(red_header, text="RED TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack(side="left")
+    red_score_label = tk.Label(red_header, text="Total: 0", font=("Arial", 18, "bold"), fg="red", bg="black")
+    red_score_label.pack(side="right")
+
+    # Green team header row
+    green_header = tk.Frame(right_team_frame, bg="black")
+    green_header.pack()
+    tk.Label(green_header, text="GREEN TEAM", font=("Arial", 18, "bold"), fg="white", bg="black").pack(side="left")
+    green_score_label = tk.Label(green_header, text="Total: 0", font=("Arial", 18, "bold"), fg="green", bg="black")
+    green_score_label.pack(side="right")
+
+
 
     player_scores = {}
     player_labels = {}
@@ -249,6 +264,13 @@ def action_log(player_teams):
                 display_name = f"{name} 🅱" if has_b.get(str(h_id)) else name
                 label.config(text=f"{display_name} - Score: {score}")
                 label.pack()
+            
+            # update total team scores     
+            total_red = sum(player_scores[f"red_player{i+1}_score"] for i in range(len(player_teams["Red"])))
+            total_green = sum(player_scores[f"green_player{i+1}_score"] for i in range(len(player_teams["Green"])))
+            red_score_label.config(text=f"Total: {total_red}")
+            green_score_label.config(text=f"Total: {total_green}")
+
 
 
     
